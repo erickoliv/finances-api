@@ -52,6 +52,8 @@ func GetConfig() Config {
 
 	r.Handle("/", api.IndexHandler(db)).Methods("GET")
 	r.Handle("/api/tags/{uuid}", api.GetTag(db)).Methods("GET")
+	r.Handle("/api/tags/{uuid}", api.UpdateTag(db)).Methods("PUT")
+	r.Handle("/api/tags/{uuid}", api.DeleteTag(db)).Methods("DELETE")
 	r.Handle("/api/tags", api.GetTags(db)).Methods("GET")
 	r.Handle("/api/tags", api.CreateTag(db)).Methods("POST")
 	//404 handler
