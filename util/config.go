@@ -41,6 +41,8 @@ func GetConfig() Config {
 		log.Fatal(err)
 	}
 
+	db.LogMode(true)
+
 	// database migrations
 	log.Println("start database migrations")
 	db.AutoMigrate(&model.Tag{})

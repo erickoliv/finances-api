@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/jinzhu/gorm"
 	"log"
@@ -9,6 +10,7 @@ import (
 	"net/http"
 	"olivsoft/model"
 	"strconv"
+	"strings"
 )
 
 // GetTags return all tags
@@ -19,26 +21,74 @@ func GetTags(app *gorm.DB) http.HandlerFunc {
 
 		// TODO: put pagination handler inside mux context
 		limit, _ := strconv.Atoi(r.FormValue("limit"))
-		page, _ := strconv.Atoi(r.FormValue("page"))
-		sort := r.FormValue("sort")
-
-
-		base := app.Find(&tags)
-		base.Count(&total)
-		pages := math.Ceil(float64(total)/float64(limit))
-		
-		base = base.Offset(limit * (page-1)).Limit(limit).Order(sort).Find(&tags)
-
-		response := PaginatedMessage{
-			Total: total,
-			Page: page,
-			Pages: int(pages),
-			Data: &tags,
-			Limit: limit,
-			Count: len(tags),
+		if limit == 0 {
+			limit = 100
 		}
 
-		PaginatedResponse(&response, w)
+		page, _ := strconv.Atoi(r.FormValue("page"))
+		if page == 0 {
+			page = 1
+		}
+
+		sort := r.FormValue("sort")
+
+		// TODO: Create Generic Midleware to put filters inside context
+		filt := map[string]interface{}{}
+		for key, _ := range r.Form {
+			if strings.HasPrefix(key, "q_") {
+				if strings.HasSuffix(key, "__like") {
+					field := fmt.Sprintf("%s LIKE ?", key[2:len(key)-6])
+					filt[field] = r.FormValue(key)
+					continue
+				}
+				if strings.HasSuffix(key, "__eq") {
+					field := fmt.Sprintf("%s = ?", key[2:len(key)-4])
+					filt[field] = r.FormValue(key)
+					continue
+				}
+				//if strings.HasSuffix(key, "__null") {
+				//	field := fmt.Sprintf("%s <= ?", key[2:len(key)-5])
+				//	filt[field] = r.FormValue(key)
+				//	continue
+				//}
+				if strings.HasSuffix(key, "__gte") {
+					field := fmt.Sprintf("%s >= ?", key[2:len(key)-5])
+					filt[field] = r.FormValue(key)
+					continue
+				}
+				if strings.HasSuffix(key, "__lte") {
+					field := fmt.Sprintf("%s <= ?", key[2:len(key)-5])
+					filt[field] = r.FormValue(key)
+					continue
+				}
+			}
+		}
+
+		base := app.Find(&tags)
+
+		for k, v := range filt {
+			log.Println(k, v)
+			base = base.Where(k, v)
+		}
+
+		base.Count(&total)
+		pages := math.Ceil(float64(total) / float64(limit))
+
+		base = base.Offset(limit * (page - 1)).Limit(limit).Order(sort).Find(&tags)
+
+		if base.Error == nil {
+			response := PaginatedMessage{
+				Total: total,
+				Page:  page,
+				Pages: int(pages),
+				Data:  &tags,
+				Limit: limit,
+				Count: len(tags),
+			}
+			PaginatedResponse(&response, w)
+		} else {
+			ValidationResponse(base.Error, w)
+		}
 	}
 }
 
