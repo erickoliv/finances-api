@@ -8,81 +8,97 @@ import (
 	"log"
 	"math"
 	"net/http"
+	"net/url"
 	"olivsoft/model"
 	"strconv"
 	"strings"
 )
 
+func ExtractFilters(f url.Values) QueryParameters {
+
+	println("parameters", f)
+	// TODO: put pagination handler inside mux context
+	limit, _ := strconv.Atoi(f.Get("limit"))
+	if limit == 0 {
+		limit = 100
+	}
+
+	page, _ := strconv.Atoi(f.Get("page"))
+	if page == 0 {
+		page = 1
+	}
+
+	sort := f.Get("sort")
+
+	log.Println("lluasdasd", f)
+
+	// TODO: Create Generic Midleware to put filters inside context
+	filters := map[string]interface{}{}
+	for key := range f {
+		if strings.HasPrefix(key, "q_") {
+			if strings.HasSuffix(key, "__like") {
+				field := fmt.Sprintf("%s LIKE ?", key[2:len(key)-6])
+				filters[field] = f.Get(key)
+				continue
+			}
+			if strings.HasSuffix(key, "__eq") {
+				field := fmt.Sprintf("%s = ?", key[2:len(key)-4])
+				filters[field] = f.Get(key)
+				continue
+			}
+			if strings.HasSuffix(key, "__gte") {
+				field := fmt.Sprintf("%s >= ?", key[2:len(key)-5])
+				filters[field] = f.Get(key)
+				continue
+			}
+			if strings.HasSuffix(key, "__lte") {
+				field := fmt.Sprintf("%s <= ?", key[2:len(key)-5])
+				filters[field] = f.Get(key)
+				continue
+			}
+		}
+	}
+
+	return QueryParameters{
+		Page:    page,
+		Limit:   limit,
+		Sort:    sort,
+		Filters: filters,
+	}
+}
+
 // GetTags return all tags
 func GetTags(app *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		tags := [] model.Tag{}
+		tags := []model.Tag{}
 		total := 0
 
-		// TODO: put pagination handler inside mux context
-		limit, _ := strconv.Atoi(r.FormValue("limit"))
-		if limit == 0 {
-			limit = 100
+		if err := r.ParseForm(); err != nil {
+			ValidationResponse(err, w)
+			return
 		}
+		queryParams := ExtractFilters(r.Form)
+		base := app.Preloads(&tags)
 
-		page, _ := strconv.Atoi(r.FormValue("page"))
-		if page == 0 {
-			page = 1
-		}
+		log.Println(queryParams)
 
-		sort := r.FormValue("sort")
-
-		// TODO: Create Generic Midleware to put filters inside context
-		filt := map[string]interface{}{}
-		for key, _ := range r.Form {
-			if strings.HasPrefix(key, "q_") {
-				if strings.HasSuffix(key, "__like") {
-					field := fmt.Sprintf("%s LIKE ?", key[2:len(key)-6])
-					filt[field] = r.FormValue(key)
-					continue
-				}
-				if strings.HasSuffix(key, "__eq") {
-					field := fmt.Sprintf("%s = ?", key[2:len(key)-4])
-					filt[field] = r.FormValue(key)
-					continue
-				}
-				//if strings.HasSuffix(key, "__null") {
-				//	field := fmt.Sprintf("%s <= ?", key[2:len(key)-5])
-				//	filt[field] = r.FormValue(key)
-				//	continue
-				//}
-				if strings.HasSuffix(key, "__gte") {
-					field := fmt.Sprintf("%s >= ?", key[2:len(key)-5])
-					filt[field] = r.FormValue(key)
-					continue
-				}
-				if strings.HasSuffix(key, "__lte") {
-					field := fmt.Sprintf("%s <= ?", key[2:len(key)-5])
-					filt[field] = r.FormValue(key)
-					continue
-				}
-			}
-		}
-
-		base := app.Find(&tags)
-
-		for k, v := range filt {
+		for k, v := range queryParams.Filters {
 			log.Println(k, v)
 			base = base.Where(k, v)
 		}
 
 		base.Count(&total)
-		pages := math.Ceil(float64(total) / float64(limit))
+		pages := math.Ceil(float64(total) / float64(queryParams.Limit))
 
-		base = base.Offset(limit * (page - 1)).Limit(limit).Order(sort).Find(&tags)
+		base = base.Offset(queryParams.Limit * (queryParams.Page - 1)).Limit(queryParams.Limit).Order(queryParams.Sort).Find(&tags)
 
 		if base.Error == nil {
 			response := PaginatedMessage{
 				Total: total,
-				Page:  page,
+				Page:  queryParams.Page,
 				Pages: int(pages),
 				Data:  &tags,
-				Limit: limit,
+				Limit: queryParams.Limit,
 				Count: len(tags),
 			}
 			PaginatedResponse(&response, w)

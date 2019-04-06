@@ -21,6 +21,13 @@ type PaginatedMessage struct{
 	Data interface{} `json:"data"`
 }
 
+type QueryParameters struct{
+	Page int
+	Limit int
+	Sort string
+	Filters  map[string]interface{}
+}
+
 
 func BuildJsonResponse(c interface{}, w http.ResponseWriter, status int) {
 	w.Header().Set("Content-Type", "application/json")
