@@ -1,14 +1,13 @@
 package util
 
 import (
-	"fmt"
+	"github.com/ericktm/olivsoft-golang-api/api"
+	"github.com/ericktm/olivsoft-golang-api/model"
 	"github.com/gorilla/mux"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 	"log"
 	"net/http"
-	"olivsoft/api"
-	"olivsoft/model"
 	"os"
 	"time"
 )
@@ -24,19 +23,12 @@ type Config struct {
 // GetConfig is the function designed
 // to prepare and return all shared/singleton application props
 func GetConfig() Config {
-	dbHost := getEnvConfig("DB_HOST")
-	dbUser := getEnvConfig("DB_USER")
-	dbPass := getEnvConfig("DB_PASS")
-	dbName := getEnvConfig("DB_NAME")
-
-
+	dbUrl := getEnvConfig("DB_URL")
 	_ = getEnvConfig("APP_TOKEN")
 
+	log.Println("url",dbUrl)
 
-	url := fmt.Sprintf("host=%s port=5432 user=%s dbname=%s password=%s sslmode=disable",dbHost,dbUser,dbName,dbPass)
-	log.Println("url",url)
-
-	db, err := gorm.Open("postgres", url)
+	db, err := gorm.Open("postgres", dbUrl)
 	if err != nil {
 		log.Fatal(err)
 	}

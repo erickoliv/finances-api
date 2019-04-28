@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
-	"olivsoft/util"
+	"github.com/ericktm/olivsoft-golang-api/util"
 )
 
 func main() {

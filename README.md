@@ -9,6 +9,7 @@ It's only for learning golang and their libraries
 - [x] Create database models, replacing default ID behaviour (use UUID instead)
 - [x] Simple token based auth middleware
 - [x] Simple logging middleware
+- [x] Dependency Management
 
 #### TO DO
 - [ ] Create sample tests
