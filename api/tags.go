@@ -3,13 +3,13 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/ericktm/olivsoft-golang-api/model"
 	"github.com/gorilla/mux"
 	"github.com/jinzhu/gorm"
 	"log"
 	"math"
 	"net/http"
 	"net/url"
-	"olivsoft/model"
 	"strconv"
 	"strings"
 )
@@ -79,8 +79,6 @@ func GetTags(app *gorm.DB) http.HandlerFunc {
 		}
 		queryParams := ExtractFilters(r.Form)
 		base := app.Preloads(&tags)
-
-		log.Println(queryParams)
 
 		for k, v := range queryParams.Filters {
 			log.Println(k, v)
