@@ -1,7 +1,9 @@
 version: '3'
 services:
+  database:
+    image: postgres
   api:
-    build: ./api
+    build: .
     environment:
       - "APP_TOKEN=${APP_TOKEN}"
       - "DB_URL=${DB_URL}"
@@ -9,9 +11,3 @@ services:
       - database
     ports:
       - "8080:8080"
-  database:
-    image: postgres
-    environment:
-      - "POSTGRES_USER=${DB_USER}"
-      - "POSTGRES_PASSWORD=${DB_PASS}"
-      - "POSTGRES_DB=${DB_NAME}"
