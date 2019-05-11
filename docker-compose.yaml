@@ -4,6 +4,7 @@ services:
     image: postgres
   api:
     build: .
+    image: ${IMAGE_NAME}:${IMAGE_VERSION}
     environment:
       - "APP_TOKEN=${APP_TOKEN}"
       - "DB_URL=${DB_URL}"

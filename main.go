@@ -1,9 +1,9 @@
 package main
 
 import (
+	"github.com/ericktm/olivsoft-golang-api/util"
 	"log"
 	"net/http"
-	"github.com/ericktm/olivsoft-golang-api/util"
 )
 
 func main() {
