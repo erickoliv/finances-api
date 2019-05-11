@@ -6,5 +6,5 @@ RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix .
 FROM alpine:latest
 WORKDIR /app/
 COPY --from=builder /olivsoft-golang-api /app/olivsoft-api
-EXPOSE 8888
+EXPOSE 80
 ENTRYPOINT ./olivsoft-api

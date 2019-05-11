@@ -2,8 +2,8 @@ version: '3'
 services:
   database:
     image: postgres
+    restart: always
   api:
-    build: .
     image: ${IMAGE_NAME}:${IMAGE_VERSION}
     environment:
       - "APP_TOKEN=${APP_TOKEN}"
@@ -11,4 +11,14 @@ services:
     depends_on:
       - database
     ports:
-      - "8080:8080"
+      # TODO: add balancer
+      - "80:80"
+    deploy:      
+      resources:
+        limits:
+          cpus: '0.1'
+          memory: 50M
+        reservations:
+          cpus: '0.1'
+          memory: 20M
+    restart: always      
