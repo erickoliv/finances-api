@@ -15,5 +15,5 @@ It's only for learning golang and their libraries
 - [ ] Create sample tests
 - [ ] Validate Request Payloads
 - [ ] Implement full Token Based Auth
-- [ ] Create dockerfile
-- [ ] Create docker-compose | kubernetes deployment file
+- [x] Create dockerfile
+- [x] Create docker-compose | kubernetes deployment file
