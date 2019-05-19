@@ -5,55 +5,58 @@ import (
 	"log"
 	"math"
 	"net/http"
+	"net/url"
 	"strconv"
+	"strings"
 
 	"github.com/ericktm/olivsoft-golang-api/model"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
 )
 
-func ExtractFilters(f gin.Params) QueryParameters {
+func ExtractFilters(f url.Values) QueryParameters {
 
 	println("parameters", f)
+
 	// TODO: put pagination handler inside mux context
-	limit, _ := strconv.Atoi(f.ByName("limit"))
+	limit, _ := strconv.Atoi(f.Get("limit"))
 	if limit == 0 {
 		limit = 100
 	}
 
-	page, _ := strconv.Atoi(f.ByName("page"))
+	page, _ := strconv.Atoi(f.Get("page"))
 	if page == 0 {
 		page = 1
 	}
 
-	sort := f.ByName("sort")
+	sort := f.Get("sort")
 
 	// TODO: Create Generic Midleware to put filters inside context
 	filters := map[string]interface{}{}
-	// for key := range f {
-	// 	if strings.HasPrefix(key, "q_") {
-	// 		if strings.HasSuffix(key, "__like") {
-	// 			field := fmt.Sprintf("%s LIKE ?", key[2:len(key)-6])
-	// 			filters[field] = f.Get(key)
-	// 			continue
-	// 		}
-	// 		if strings.HasSuffix(key, "__eq") {
-	// 			field := fmt.Sprintf("%s = ?", key[2:len(key)-4])
-	// 			filters[field] = f.Get(key)
-	// 			continue
-	// 		}
-	// 		if strings.HasSuffix(key, "__gte") {
-	// 			field := fmt.Sprintf("%s >= ?", key[2:len(key)-5])
-	// 			filters[field] = f.Get(key)
-	// 			continue
-	// 		}
-	// 		if strings.HasSuffix(key, "__lte") {
-	// 			field := fmt.Sprintf("%s <= ?", key[2:len(key)-5])
-	// 			filters[field] = f.Get(key)
-	// 			continue
-	// 		}
-	// 	}
-	// }
+	for key := range f {
+		if strings.HasPrefix(key, "q_") {
+			if strings.HasSuffix(key, "__like") {
+				field := fmt.Sprintf("%s LIKE ?", key[2:len(key)-6])
+				filters[field] = f.Get(key)
+				continue
+			}
+			if strings.HasSuffix(key, "__eq") {
+				field := fmt.Sprintf("%s = ?", key[2:len(key)-4])
+				filters[field] = f.Get(key)
+				continue
+			}
+			if strings.HasSuffix(key, "__gte") {
+				field := fmt.Sprintf("%s >= ?", key[2:len(key)-5])
+				filters[field] = f.Get(key)
+				continue
+			}
+			if strings.HasSuffix(key, "__lte") {
+				field := fmt.Sprintf("%s <= ?", key[2:len(key)-5])
+				filters[field] = f.Get(key)
+				continue
+			}
+		}
+	}
 
 	return QueryParameters{
 		Page:    page,
@@ -69,7 +72,7 @@ func GetTags(app *gorm.DB) gin.HandlerFunc {
 		tags := []model.Tag{}
 		total := 0
 
-		queryParams := ExtractFilters(c.Params)
+		queryParams := ExtractFilters(c.Request.URL.Query())
 		base := app.Preloads(&tags)
 
 		for k, v := range queryParams.Filters {
