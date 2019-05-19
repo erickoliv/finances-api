@@ -1,14 +1,15 @@
 package api
 
 import (
-	"encoding/json"
+	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
-	"net/http"
 )
 
-func IndexHandler(app *gorm.DB) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(":)")
+// IndexHandler is the application root address. Can be used to check application status
+func IndexHandler(app *gorm.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.JSON(200, gin.H{
+			"status": "ok",
+		})
 	}
 }

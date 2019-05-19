@@ -1,63 +1,59 @@
 package api
 
 import (
-	"encoding/json"
 	"fmt"
-	"github.com/ericktm/olivsoft-golang-api/model"
-	"github.com/gorilla/mux"
-	"github.com/jinzhu/gorm"
 	"log"
 	"math"
 	"net/http"
-	"net/url"
 	"strconv"
-	"strings"
+
+	"github.com/ericktm/olivsoft-golang-api/model"
+	"github.com/gin-gonic/gin"
+	"github.com/jinzhu/gorm"
 )
 
-func ExtractFilters(f url.Values) QueryParameters {
+func ExtractFilters(f gin.Params) QueryParameters {
 
 	println("parameters", f)
 	// TODO: put pagination handler inside mux context
-	limit, _ := strconv.Atoi(f.Get("limit"))
+	limit, _ := strconv.Atoi(f.ByName("limit"))
 	if limit == 0 {
 		limit = 100
 	}
 
-	page, _ := strconv.Atoi(f.Get("page"))
+	page, _ := strconv.Atoi(f.ByName("page"))
 	if page == 0 {
 		page = 1
 	}
 
-	sort := f.Get("sort")
-
-	log.Println("lluasdasd", f)
+	sort := f.ByName("sort")
 
 	// TODO: Create Generic Midleware to put filters inside context
 	filters := map[string]interface{}{}
-	for key := range f {
-		if strings.HasPrefix(key, "q_") {
-			if strings.HasSuffix(key, "__like") {
-				field := fmt.Sprintf("%s LIKE ?", key[2:len(key)-6])
-				filters[field] = f.Get(key)
-				continue
-			}
-			if strings.HasSuffix(key, "__eq") {
-				field := fmt.Sprintf("%s = ?", key[2:len(key)-4])
-				filters[field] = f.Get(key)
-				continue
-			}
-			if strings.HasSuffix(key, "__gte") {
-				field := fmt.Sprintf("%s >= ?", key[2:len(key)-5])
-				filters[field] = f.Get(key)
-				continue
-			}
-			if strings.HasSuffix(key, "__lte") {
-				field := fmt.Sprintf("%s <= ?", key[2:len(key)-5])
-				filters[field] = f.Get(key)
-				continue
-			}
-		}
-	}
+	// for key := range f {
+	// 	if strings.HasPrefix(key, "q_") {
+	// 		if strings.HasSuffix(key, "__like") {
+	// 			field := fmt.Sprintf("%s LIKE ?", key[2:len(key)-6])
+	// 			filters[field] = f.Get(key)
+	// 			continue
+	// 		}
+	// 		if strings.HasSuffix(key, "__eq") {
+	// 			field := fmt.Sprintf("%s = ?", key[2:len(key)-4])
+	// 			filters[field] = f.Get(key)
+	// 			continue
+	// 		}
+	// 		if strings.HasSuffix(key, "__gte") {
+	// 			field := fmt.Sprintf("%s >= ?", key[2:len(key)-5])
+	// 			filters[field] = f.Get(key)
+	// 			continue
+	// 		}
+	// 		if strings.HasSuffix(key, "__lte") {
+	// 			field := fmt.Sprintf("%s <= ?", key[2:len(key)-5])
+	// 			filters[field] = f.Get(key)
+	// 			continue
+	// 		}
+	// 	}
+	// }
 
 	return QueryParameters{
 		Page:    page,
@@ -68,16 +64,12 @@ func ExtractFilters(f url.Values) QueryParameters {
 }
 
 // GetTags return all tags
-func GetTags(app *gorm.DB) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func GetTags(app *gorm.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
 		tags := []model.Tag{}
 		total := 0
 
-		if err := r.ParseForm(); err != nil {
-			ValidationResponse(err, w)
-			return
-		}
-		queryParams := ExtractFilters(r.Form)
+		queryParams := ExtractFilters(c.Params)
 		base := app.Preloads(&tags)
 
 		for k, v := range queryParams.Filters {
@@ -99,78 +91,76 @@ func GetTags(app *gorm.DB) http.HandlerFunc {
 				Limit: queryParams.Limit,
 				Count: len(tags),
 			}
-			PaginatedResponse(&response, w)
+			c.JSON(http.StatusOK, &response)
 		} else {
-			ValidationResponse(base.Error, w)
+			c.JSON(http.StatusInternalServerError, &base.Error)
 		}
 	}
 }
 
-func CreateTag(app *gorm.DB) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func CreateTag(app *gorm.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
 		tag := model.Tag{}
-
-		json.NewDecoder(r.Body).Decode(&tag)
-		defer r.Body.Close()
+		c.Bind(&tag)
 
 		if err := app.Save(&tag).Error; err != nil {
 			log.Println(err)
-			ValidationResponse(err, w)
 		} else {
-			CreatedResponse(&tag, w)
+			c.JSON(http.StatusCreated, &tag)
 		}
 	}
 }
 
-func GetTag(app *gorm.DB) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func GetTag(app *gorm.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
 		tag := model.Tag{}
-		vars := mux.Vars(r)
-		uuid := vars["uuid"]
+
+		uuid := c.Param("uuid")
 
 		app.Where("uuid = ?", uuid).First(&tag)
 
 		if tag.IsNew() {
-			NotFoundResponse(w)
+			c.JSON(http.StatusNotFound, ErrorMessage{"tag not found"})
 		} else {
-			SuccessResponse(&tag, w)
+			c.JSON(http.StatusOK, &tag)
 		}
 	}
 }
 
-func UpdateTag(app *gorm.DB) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func UpdateTag(app *gorm.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
 		current := model.Tag{}
 		new := model.Tag{}
 
-		json.NewDecoder(r.Body).Decode(&new)
-		defer r.Body.Close()
+		c.Bind(&new)
 
-		vars := mux.Vars(r)
-		uuid := vars["uuid"]
-
+		uuid := c.Param("uuid")
 		app.Where("uuid = ?", uuid).First(&current)
 
 		if current.IsNew() {
-			NotFoundResponse(w)
+			c.JSON(http.StatusNotFound, ErrorMessage{"tag not found"})
 		} else {
 			current.Name = new.Name
 			current.Description = new.Description
 
 			app.Save(&current)
-			SuccessResponse(&current, w)
+			c.JSON(http.StatusOK, &current)
 		}
 	}
 }
 
-func DeleteTag(app *gorm.DB) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		uuid := vars["uuid"]
+func DeleteTag(app *gorm.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		uuid := c.Param("uuid")
+		entity := model.Tag{}
 
-		app.Where("uuid = ?", uuid).Delete(&model.Tag{})
+		affected := app.Where("uuid = ?", uuid).Delete(&entity).RowsAffected
 
-		DeletedResponse(w)
-
+		if affected > 0 {
+			c.Status(http.StatusNoContent)
+		} else {
+			msg := fmt.Sprintf("%s - ocurrencies: %d", uuid, affected)
+			c.JSON(http.StatusNotFound, ErrorMessage{msg})
+		}
 	}
 }

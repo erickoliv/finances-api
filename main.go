@@ -1,9 +1,9 @@
 package main
 
 import (
-	"github.com/ericktm/olivsoft-golang-api/util"
 	"log"
-	"net/http"
+
+	"github.com/ericktm/olivsoft-golang-api/util"
 )
 
 func main() {
@@ -12,7 +12,7 @@ func main() {
 
 	app := util.GetConfig()
 
-	log.Fatal(http.ListenAndServe(":8080", app.Router))
+	log.Fatal(app.Router.Run())
 
 	defer app.DB.Close()
 }

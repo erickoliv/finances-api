@@ -12,7 +12,7 @@ services:
       - database
     ports:
       # TODO: add balancer
-      - "80:80"
+      - "80:8080"
     deploy:      
       resources:
         limits:
