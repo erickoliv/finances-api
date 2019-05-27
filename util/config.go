@@ -34,12 +34,11 @@ func GetConfig() Config {
 		log.Fatal(err)
 	}
 
+	// TODO: Enable only with environment variable ON
 	db.LogMode(true)
 
 	// database migrations
-	log.Println("start database migrations")
 	db.AutoMigrate(&model.Tag{})
-	log.Println("stop database migrations")
 
 	r := gin.Default()
 	r.Use(authMiddleware())

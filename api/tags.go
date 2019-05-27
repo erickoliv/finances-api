@@ -3,95 +3,29 @@ package api
 import (
 	"fmt"
 	"log"
-	"math"
 	"net/http"
-	"net/url"
-	"strconv"
-	"strings"
 
 	"github.com/ericktm/olivsoft-golang-api/model"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
 )
 
-func ExtractFilters(f url.Values) QueryParameters {
-
-	println("parameters", f)
-
-	// TODO: put pagination handler inside mux context
-	limit, _ := strconv.Atoi(f.Get("limit"))
-	if limit == 0 {
-		limit = 100
-	}
-
-	page, _ := strconv.Atoi(f.Get("page"))
-	if page == 0 {
-		page = 1
-	}
-
-	sort := f.Get("sort")
-
-	// TODO: Create Generic Midleware to put filters inside context
-	filters := map[string]interface{}{}
-	for key := range f {
-		if strings.HasPrefix(key, "q_") {
-			if strings.HasSuffix(key, "__like") {
-				field := fmt.Sprintf("%s LIKE ?", key[2:len(key)-6])
-				filters[field] = f.Get(key)
-				continue
-			}
-			if strings.HasSuffix(key, "__eq") {
-				field := fmt.Sprintf("%s = ?", key[2:len(key)-4])
-				filters[field] = f.Get(key)
-				continue
-			}
-			if strings.HasSuffix(key, "__gte") {
-				field := fmt.Sprintf("%s >= ?", key[2:len(key)-5])
-				filters[field] = f.Get(key)
-				continue
-			}
-			if strings.HasSuffix(key, "__lte") {
-				field := fmt.Sprintf("%s <= ?", key[2:len(key)-5])
-				filters[field] = f.Get(key)
-				continue
-			}
-		}
-	}
-
-	return QueryParameters{
-		Page:    page,
-		Limit:   limit,
-		Sort:    sort,
-		Filters: filters,
-	}
-}
-
 // GetTags return all tags
 func GetTags(app *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		tags := []model.Tag{}
-		total := 0
 
-		queryParams := ExtractFilters(c.Request.URL.Query())
-		base := app.Preloads(&tags)
+		query := QueryData{}
+		query.ExtractFilters(c.Request.URL.Query())
 
-		for k, v := range queryParams.Filters {
-			log.Println(k, v)
-			base = base.Where(k, v)
-		}
-
-		base.Count(&total)
-		pages := math.Ceil(float64(total) / float64(queryParams.Limit))
-
-		base = base.Offset(queryParams.Limit * (queryParams.Page - 1)).Limit(queryParams.Limit).Order(queryParams.Sort).Find(&tags)
-
+		base := query.Build(app.Preloads(&tags)).Find(&tags)
 		if base.Error == nil {
 			response := PaginatedMessage{
-				Total: total,
-				Page:  queryParams.Page,
-				Pages: int(pages),
+				Total: query.Total,
+				Page:  query.Page,
+				Pages: query.Pages,
 				Data:  &tags,
-				Limit: queryParams.Limit,
+				Limit: query.Limit,
 				Count: len(tags),
 			}
 			c.JSON(http.StatusOK, &response)
@@ -101,6 +35,7 @@ func GetTags(app *gorm.DB) gin.HandlerFunc {
 	}
 }
 
+// CreateTag can be called to create a new instance of Tag on database, using props provided via http request
 func CreateTag(app *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		tag := model.Tag{}
@@ -114,8 +49,10 @@ func CreateTag(app *gorm.DB) gin.HandlerFunc {
 	}
 }
 
+// GetTag can be called to get a specific tag from the database. The uuid used to query is part of the url
 func GetTag(app *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
+
 		tag := model.Tag{}
 
 		uuid := c.Param("uuid")
@@ -130,6 +67,7 @@ func GetTag(app *gorm.DB) gin.HandlerFunc {
 	}
 }
 
+// UpdateTag can be called to update a specific tag. The uuid used to query is part of the url
 func UpdateTag(app *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		current := model.Tag{}
@@ -152,6 +90,7 @@ func UpdateTag(app *gorm.DB) gin.HandlerFunc {
 	}
 }
 
+// DeleteTag can be used to logical delete a row tag from the database.
 func DeleteTag(app *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		uuid := c.Param("uuid")

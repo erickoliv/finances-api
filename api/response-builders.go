@@ -1,9 +1,21 @@
 package api
 
+import (
+	"fmt"
+	"math"
+	"net/url"
+	"strconv"
+	"strings"
+
+	"github.com/jinzhu/gorm"
+)
+
+// ErrorMessage it's a struct to be used to pass standard error description inside the application
 type ErrorMessage struct {
 	Message string `json:"message"`
 }
 
+// PaginatedMessage is a structure which contains standard attributes to be used on paginated services
 type PaginatedMessage struct {
 	Total int `json:"total"`
 	Page  int `json:"page"`
@@ -15,59 +27,77 @@ type PaginatedMessage struct {
 	Data  interface{} `json:"data"`
 }
 
-type QueryParameters struct {
+// QueryData is structure which contains standard atributes to parse http parameters for API filter, search and pagination
+type QueryData struct {
 	Page    int
+	Pages   int
+	Total   int
 	Limit   int
 	Sort    string
 	Filters map[string]interface{}
 }
 
-// func BuildJsonResponse(c interface{}, w http.ResponseWriter, status int) {
-// 	w.Header().Set("Content-Type", "application/json")
+// ExtractFilters can be used to parse query parameters and return a QueryData object, useful to query, filter and paginate requests
+func (q *QueryData) ExtractFilters(f url.Values) {
 
-// 	if status == 0 {
-// 		w.WriteHeader(http.StatusOK)
-// 	} else {
-// 		w.WriteHeader(status)
-// 	}
+	// TODO: put pagination handler inside mux context
 
-// 	if err := json.NewEncoder(w).Encode(&c); err != nil {
-// 		log.Fatal("parse error", err)
-// 	}
-// }
+	if limit, err := strconv.Atoi(f.Get("limit")); err != nil {
+		q.Limit = 100
+	} else {
+		q.Limit = limit
+	}
 
-// func PageNotFound() http.HandlerFunc {
-// 	return func(w http.ResponseWriter, r *http.Request) {
-// 		BuildJsonResponse(":(", w, http.StatusNotFound)
-// 	}
-// }
-// func UnauthorizedResponse(w http.ResponseWriter) {
-// 	msg := ErrorMessage{"unauthorized"}
-// 	BuildJsonResponse(&msg, w, http.StatusUnauthorized)
-// }
+	if page, err := strconv.Atoi(f.Get("page")); err != nil {
+		q.Page = 1
+	} else {
+		q.Page = page
+	}
 
-// func ErrorResponse(err error) http.HandlerFunc {
-// 	return func(w http.ResponseWriter, r *http.Request) {
-// 		BuildJsonResponse(ErrorMessage{Message: err.Error()}, w, http.StatusInternalServerError)
-// 	}
-// }
+	println("page", q.Page)
+	q.Sort = f.Get("sort")
 
-// func ValidationResponse(err error, w http.ResponseWriter) {
-// 	BuildJsonResponse(ErrorMessage{Message: err.Error()}, w, http.StatusInternalServerError)
-// }
+	// TODO: Create Generic Midleware to put filters inside context
+	filters := map[string]interface{}{}
+	for key := range f {
+		if strings.HasPrefix(key, "q_") {
+			if strings.HasSuffix(key, "__like") {
+				field := fmt.Sprintf("%s LIKE ?", key[2:len(key)-6])
+				filters[field] = f.Get(key)
+				continue
+			}
+			if strings.HasSuffix(key, "__eq") {
+				field := fmt.Sprintf("%s = ?", key[2:len(key)-4])
+				filters[field] = f.Get(key)
+				continue
+			}
+			if strings.HasSuffix(key, "__gte") {
+				field := fmt.Sprintf("%s >= ?", key[2:len(key)-5])
+				filters[field] = f.Get(key)
+				continue
+			}
+			if strings.HasSuffix(key, "__lte") {
+				field := fmt.Sprintf("%s <= ?", key[2:len(key)-5])
+				filters[field] = f.Get(key)
+				continue
+			}
+		}
+	}
 
-// // func NotFoundResponse(c *gin.Context) {
-// // 	BuildJsonResponse(ErrorMessage{Message: "resource not found"}, w, http.StatusNotFound)
-// // }
+	q.Filters = filters
+}
 
-// func CreatedResponse(i interface{}, w http.ResponseWriter) {
-// 	BuildJsonResponse(i, w, http.StatusCreated)
-// }
+// Build is the function where the QueryData attributes are translated into a gorm.DB instance. Can be used to generic filter, order and pagination
+func (q *QueryData) Build(db *gorm.DB) *gorm.DB {
+	base := db
 
-// func SuccessResponse(i interface{}, w http.ResponseWriter) {
-// 	BuildJsonResponse(i, w, http.StatusOK)
-// }
+	for k, v := range q.Filters {
+		base = base.Where(k, v)
+	}
 
-// func PaginatedResponse(i interface{}, w http.ResponseWriter) {
-// 	BuildJsonResponse(i, w, http.StatusOK)
-// }
+	base.Count(&q.Total)
+	base = base.Offset(q.Limit * (q.Page - 1)).Limit(q.Limit).Order(q.Sort)
+	q.Pages = int(math.Ceil(float64(q.Total) / float64(q.Limit)))
+
+	return base
+}
