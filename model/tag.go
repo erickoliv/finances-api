@@ -9,8 +9,8 @@ import (
 // Tag to iterate with database
 type Tag struct {
 	BaseModel
-	Name        string `json:"name"`
-	Description string `json:"description"`
+	Name        string    `json:"name" binding:"required"`
+	Description string    `json:"description"`
 	Owner       uuid.UUID `gorm:"INDEX,not null" json:"owner"`
 }
 
@@ -29,7 +29,6 @@ func (t *Tag) BeforeCreate(scope *gorm.Scope) (err error) {
 
 	return
 }
-
 
 // TableName returns tag table name
 func (Tag) TableName() string {

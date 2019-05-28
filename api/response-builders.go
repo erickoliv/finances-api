@@ -38,23 +38,20 @@ type QueryData struct {
 }
 
 // ExtractFilters can be used to parse query parameters and return a QueryData object, useful to query, filter and paginate requests
-func (q *QueryData) ExtractFilters(f url.Values) {
+func ExtractFilters(f url.Values) QueryData {
+	q := QueryData{
+		Page:  1,
+		Limit: 100,
+	}
 
-	// TODO: put pagination handler inside mux context
-
-	if limit, err := strconv.Atoi(f.Get("limit")); err != nil {
-		q.Limit = 100
-	} else {
+	if limit, err := strconv.Atoi(f.Get("limit")); err == nil {
 		q.Limit = limit
 	}
 
-	if page, err := strconv.Atoi(f.Get("page")); err != nil {
-		q.Page = 1
-	} else {
+	if page, err := strconv.Atoi(f.Get("page")); err == nil {
 		q.Page = page
 	}
 
-	println("page", q.Page)
 	q.Sort = f.Get("sort")
 
 	// TODO: Create Generic Midleware to put filters inside context
@@ -85,6 +82,8 @@ func (q *QueryData) ExtractFilters(f url.Values) {
 	}
 
 	q.Filters = filters
+
+	return q
 }
 
 // Build is the function where the QueryData attributes are translated into a gorm.DB instance. Can be used to generic filter, order and pagination

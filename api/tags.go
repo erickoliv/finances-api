@@ -14,9 +14,7 @@ import (
 func GetTags(app *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		tags := []model.Tag{}
-
-		query := QueryData{}
-		query.ExtractFilters(c.Request.URL.Query())
+		query := ExtractFilters(c.Request.URL.Query())
 
 		base := query.Build(app.Preloads(&tags)).Find(&tags)
 		if base.Error == nil {
@@ -73,7 +71,11 @@ func UpdateTag(app *gorm.DB) gin.HandlerFunc {
 		current := model.Tag{}
 		new := model.Tag{}
 
-		c.Bind(&new)
+		// TODO: create validate function to be used for all tag related validations
+		if err := c.Bind(&new); err != nil {
+			c.AbortWithStatusJSON(http.StatusBadRequest, ErrorMessage{Message: err.Error()})
+			return
+		}
 
 		uuid := c.Param("uuid")
 		app.Where("uuid = ?", uuid).First(&current)
@@ -84,8 +86,11 @@ func UpdateTag(app *gorm.DB) gin.HandlerFunc {
 			current.Name = new.Name
 			current.Description = new.Description
 
-			app.Save(&current)
-			c.JSON(http.StatusOK, &current)
+			if err := app.Save(&current).Error; err != nil {
+				c.AbortWithStatusJSON(http.StatusInternalServerError, ErrorMessage{Message: err.Error()})
+			} else {
+				c.JSON(http.StatusOK, &current)
+			}
 		}
 	}
 }
