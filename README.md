@@ -1,7 +1,6 @@
 #### olivsoft-golang-api
 
-This project is not in Production Ready State
-It's only for learning golang and their libraries
+> This is just a personal project I'm using to learn the Go programming language and its libraries.
 
 #### The road so far
 - [x] Create application structure
@@ -10,10 +9,10 @@ It's only for learning golang and their libraries
 - [x] Simple token based auth middleware
 - [x] Simple logging middleware
 - [x] Dependency Management
-
-#### TO DO
-- [ ] Create sample tests
-- [ ] Validate Request Payloads
-- [ ] Implement full Token Based Auth
 - [x] Create dockerfile
 - [x] Create docker-compose | kubernetes deployment file
+
+#### TO DO
+- [-] Create sample tests
+- [ ] Validate Request Payloads
+- [ ] Implement a Full Token Based Auth
