@@ -3,16 +3,14 @@ package main
 import (
 	"log"
 
-	"github.com/ericktm/olivsoft-golang-api/util"
+	"github.com/ericktm/olivsoft-golang-api/database"
+	"github.com/ericktm/olivsoft-golang-api/url"
 )
 
 func main() {
-	log.Println("Application Start")
-	defer log.Println("Application Stop")
+	db := database.PrepareDatabase()
+	defer db.Close()
 
-	app := util.GetConfig()
-
-	log.Fatal(app.Router.Run())
-
-	defer app.DB.Close()
+	app := url.PrepareRouter(db)
+	log.Fatal(app.Run())
 }
