@@ -1,6 +1,6 @@
+[![HitCount](http://hits.dwyl.io/ericktm/ericktm/olivsoft-golang-api.svg)](http://hits.dwyl.io/ericktm/ericktm/olivsoft-golang-api)
 #### olivsoft-golang-api
 > This is just a personal project I'm using to learn the Go programming language and its libraries.
-[![HitCount](http://hits.dwyl.io/ericktm/ericktm/olivsoft-golang-api.svg)](http://hits.dwyl.io/ericktm/ericktm/olivsoft-golang-api)
 #### The road so far
 - [x] Create application structure
 - [x] Get configs from environment
