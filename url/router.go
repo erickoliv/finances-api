@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/ericktm/olivsoft-golang-api/api"
-	"github.com/ericktm/olivsoft-golang-api/constants"
+	"github.com/ericktm/olivsoft-golang-api/database"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
 )
@@ -15,20 +15,10 @@ func PrepareRouter(db *gorm.DB) *gin.Engine {
 	r := gin.Default()
 	r.GET("/", api.IndexHandler(db))
 
-	r.Use(DatabaseMiddleware(db))
+	r.Use(database.Middleware(db))
 	r.Use(AuthMiddleware())
 
-	api.TagRoutes(r)
-
 	return r
-}
-
-// DatabaseMiddleware adds a gorm.DB connection pool reference inside gin.Context
-func DatabaseMiddleware(db *gorm.DB) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		c.Set(constants.DB, db)
-		c.Next()
-	}
 }
 
 // AuthMiddleware validates Authorization Headers

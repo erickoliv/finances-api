@@ -4,7 +4,9 @@ import (
 	"log"
 	"os"
 
+	"github.com/ericktm/olivsoft-golang-api/constants"
 	"github.com/ericktm/olivsoft-golang-api/model"
+	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 )
@@ -35,4 +37,12 @@ func getEnvConfig(s string) string {
 		log.Fatalf("Environment variable %s not found", s)
 	}
 	return ""
+}
+
+// Middleware adds a gorm.DB connection pool reference inside gin.Context
+func Middleware(db *gorm.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Set(constants.DB, db)
+		c.Next()
+	}
 }

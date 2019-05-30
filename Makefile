@@ -1,5 +1,8 @@
 SHELL=bash
 
+include .env
+export
+
 run:
 	go run main.go
 
@@ -8,8 +11,7 @@ dev:
 	docker-compose up --build
 
 build:
-	source .env
-	docker-compose build
+	go build 
 
 test:
 	go test -cover ./...
