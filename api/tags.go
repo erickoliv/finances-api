@@ -12,9 +12,13 @@ import (
 	"github.com/jinzhu/gorm"
 )
 
+// TagRoutes add tag related urls inside a gin.router/engine context
 func TagRoutes(r *gin.Engine) {
-	///
-	println("setup tag routes")
+	r.GET("/api/tags/:uuid", GetTag)
+	r.PUT("/api/tags/:uuid", UpdateTag)
+	r.DELETE("/api/tags/:uuid", DeleteTag)
+	r.GET("/api/tags", GetTags)
+	r.POST("/api/tags", CreateTag)
 }
 
 // GetTags return all tags

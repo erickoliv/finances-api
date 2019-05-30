@@ -18,11 +18,7 @@ func PrepareRouter(db *gorm.DB) *gin.Engine {
 	r.Use(DatabaseMiddleware(db))
 	r.Use(AuthMiddleware())
 
-	r.GET("/api/tags/:uuid", api.GetTag)
-	r.PUT("/api/tags/:uuid", api.UpdateTag)
-	r.DELETE("/api/tags/:uuid", api.DeleteTag)
-	r.GET("/api/tags", api.GetTags)
-	r.POST("/api/tags", api.CreateTag)
+	api.TagRoutes(r)
 
 	return r
 }
