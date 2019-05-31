@@ -1,6 +1,6 @@
 SHELL=bash
 
-include .env
+-include .env
 export
 
 run:

@@ -1,11 +1,13 @@
 package api
 
 import (
+	"bytes"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 
+	"github.com/ericktm/olivsoft-golang-api/model"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -19,12 +21,20 @@ func TestGetTags(t *testing.T) {
 }
 
 func TestCreateTag(t *testing.T) {
-	text := "{\"name\":\"nova tag\",\"description\": \"descrição com cacteres espéciàis\"}"
 
-	req, _ := http.NewRequest("POST", "/api/tags", strings.NewReader(text))
+	tag := model.Tag{
+		Name:        "a simple tag",
+		Description: "a tag description",
+	}
+
+	str, _ := json.Marshal(tag)
+
+	req, _ := http.NewRequest("POST", "/api/tags", bytes.NewReader(str))
+	req.Header.Add("Content-Type", "application/json")
+
 	w := httptest.NewRecorder()
 
 	router.ServeHTTP(w, req)
 
-	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Equal(t, http.StatusCreated, w.Code)
 }

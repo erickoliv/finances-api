@@ -2,7 +2,6 @@ package api
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/ericktm/olivsoft-golang-api/model"
@@ -14,11 +13,11 @@ import (
 
 // TagRoutes add tag related urls inside a gin.router/engine context
 func TagRoutes(r *gin.Engine) {
+	r.POST("/api/tags", CreateTag)
 	r.GET("/api/tags/:uuid", GetTag)
 	r.PUT("/api/tags/:uuid", UpdateTag)
 	r.DELETE("/api/tags/:uuid", DeleteTag)
 	r.GET("/api/tags", GetTags)
-	r.POST("/api/tags", CreateTag)
 }
 
 // GetTags return all tags
@@ -49,9 +48,8 @@ func CreateTag(c *gin.Context) {
 	db := c.MustGet(constants.DB).(*gorm.DB)
 	tag := model.Tag{}
 	c.Bind(&tag)
-
 	if err := db.Save(&tag).Error; err != nil {
-		log.Println(err)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, ErrorMessage{Message: err.Error()})
 	} else {
 		c.JSON(http.StatusCreated, &tag)
 	}
