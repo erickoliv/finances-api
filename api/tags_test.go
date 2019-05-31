@@ -11,15 +11,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestGetTags(t *testing.T) {
-	req, _ := http.NewRequest("GET", "/api/tags", nil)
-	w := httptest.NewRecorder()
-
-	router.ServeHTTP(w, req)
-
-	assert.Equal(t, http.StatusOK, w.Code)
-}
-
 func TestCreateTag(t *testing.T) {
 
 	tag := model.Tag{
@@ -37,4 +28,15 @@ func TestCreateTag(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusCreated, w.Code)
+}
+
+func TestGetTags(t *testing.T) {
+	req, _ := http.NewRequest("GET", "/api/tags", nil)
+	w := httptest.NewRecorder()
+
+	router.ServeHTTP(w, req)
+
+	println(w.Body.String())
+
+	assert.Equal(t, http.StatusOK, w.Code)
 }
