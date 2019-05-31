@@ -3,23 +3,11 @@ package api
 import (
 	"net/http"
 	"net/http/httptest"
-	"os"
+	"strings"
 	"testing"
 
-	"github.com/ericktm/olivsoft-golang-api/database"
-	"github.com/gin-gonic/gin"
+	"github.com/stretchr/testify/assert"
 )
-
-var router = gin.Default()
-
-func TestMain(m *testing.M) {
-	var db = database.PrepareDatabase()
-	defer db.Close()
-	router.Use(database.Middleware(db))
-	TagRoutes(router)
-
-	os.Exit(m.Run())
-}
 
 func TestGetTags(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/api/tags", nil)
@@ -27,7 +15,16 @@ func TestGetTags(t *testing.T) {
 
 	router.ServeHTTP(w, req)
 
-	if w.Code != http.StatusOK {
-		t.Errorf("Status %d; want 200", w.Code)
-	}
+	assert.Equal(t, http.StatusOK, w.Code)
+}
+
+func TestCreateTag(t *testing.T) {
+	text := "{\"name\":\"nova tag\",\"description\": \"descrição com cacteres espéciàis\"}"
+
+	req, _ := http.NewRequest("POST", "/api/tags", strings.NewReader(text))
+	w := httptest.NewRecorder()
+
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
 }

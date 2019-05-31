@@ -13,10 +13,12 @@ import (
 // PrepareRouter add description
 func PrepareRouter(db *gorm.DB) *gin.Engine {
 	r := gin.Default()
-	r.GET("/", api.IndexHandler(db))
+	r.GET("/", api.IndexHandler)
 
 	r.Use(database.Middleware(db))
 	r.Use(AuthMiddleware())
+
+	api.TagRoutes(r)
 
 	return r
 }

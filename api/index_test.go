@@ -1,29 +1,34 @@
 package api
 
 import (
-	"reflect"
+	"net/http"
+	"net/http/httptest"
+	"os"
 	"testing"
 
+	"github.com/ericktm/olivsoft-golang-api/database"
 	"github.com/gin-gonic/gin"
-	"github.com/jinzhu/gorm"
+	"github.com/stretchr/testify/assert"
 )
 
+var router = gin.Default()
+
 func TestIndexHandler(t *testing.T) {
-	type args struct {
-		app *gorm.DB
-	}
-	tests := []struct {
-		name string
-		args args
-		want gin.HandlerFunc
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := IndexHandler(tt.args.app); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("IndexHandler() = %v, want %v", got, tt.want)
-			}
-		})
-	}
+	// router = gin.New()
+	router.GET("/", IndexHandler)
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/", nil)
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Contains(t, w.Body.String(), "\"status\":\"ok\"")
+}
+
+func TestMain(m *testing.M) {
+	var db = database.PrepareDatabase()
+	defer db.Close()
+	router.Use(database.Middleware(db))
+	TagRoutes(router)
+	os.Exit(m.Run())
 }
