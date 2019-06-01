@@ -3,16 +3,30 @@ package api
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	mocket "github.com/Selvatico/go-mocket"
 	"github.com/ericktm/olivsoft-golang-api/model"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestCreateTag(t *testing.T) {
+var tagOne = map[string]interface{}{"uuid": "3272d69a-e38d-45c6-94fb-4a0dd9e69385", "name": "a test name", "description": "a test description"}
+var tagTwo = map[string]interface{}{"uuid": "3272d69a-e38d-45c6-94fb-4a0dd9e61235", "name": "a two name", "description": ""}
+var singleResult = []map[string]interface{}{tagOne}
+var allRows = []map[string]interface{}{tagOne, tagTwo}
+var count = []map[string]interface{}{{"count(*)": len(allRows)}}
 
+func setupTagsDatabase() {
+	mocket.Catcher.NewMock().WithArgs(tagOne["uuid"].(string)).WithReply(singleResult)
+
+	mocket.Catcher.NewMock().WithQuery(`SELECT count(*) FROM "public"."tags"  WHERE "public"."tags"."deleted_at" IS NULL`).WithReply(count)
+	mocket.Catcher.NewMock().WithQuery(`SELECT * FROM "public"."tags"  WHERE "public"."tags"."deleted_at" IS NULL`).WithReply(allRows)
+}
+
+func TestCreateTag(t *testing.T) {
 	tag := model.Tag{
 		Name:        "a simple tag",
 		Description: "a tag description",
@@ -36,7 +50,19 @@ func TestGetTags(t *testing.T) {
 
 	router.ServeHTTP(w, req)
 
-	println(w.Body.String())
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Contains(t, w.Body.String(), `"total":2`)
+}
+
+func TestGetTag(t *testing.T) {
+	url := fmt.Sprintf("/api/tags/%s", "3272d69a-e38d-45c6-94fb-4a0dd9e69385")
+	req, _ := http.NewRequest("GET", url, nil)
+	req.Header.Add("Content-Type", "application/json")
+
+	w := httptest.NewRecorder()
+
+	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Contains(t, w.Body.String(), tagOne["name"])
 }

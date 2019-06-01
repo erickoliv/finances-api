@@ -12,12 +12,12 @@ import (
 )
 
 // TagRoutes add tag related urls inside a gin.router/engine context
-func TagRoutes(r *gin.Engine) {
-	r.POST("/api/tags", CreateTag)
-	r.GET("/api/tags/:uuid", GetTag)
-	r.PUT("/api/tags/:uuid", UpdateTag)
-	r.DELETE("/api/tags/:uuid", DeleteTag)
-	r.GET("/api/tags", GetTags)
+func TagRoutes(r *gin.RouterGroup) {
+	r.POST("/tags", CreateTag)
+	r.GET("/tags/:uuid", GetTag)
+	r.PUT("/tags/:uuid", UpdateTag)
+	r.DELETE("/tags/:uuid", DeleteTag)
+	r.GET("/tags", GetTags)
 }
 
 // GetTags return all tags

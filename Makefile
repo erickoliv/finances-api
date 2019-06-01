@@ -14,7 +14,7 @@ build:
 	go build 
 
 test:
-	go test -cover -race -v ./...
+	go test -cover -race ./...
 
 full-test:
 	rm -f olivsoft-golang-api
