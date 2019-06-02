@@ -26,6 +26,7 @@ func PrepareDatabase() *gorm.DB {
 
 	// database migrations
 	db.AutoMigrate(&model.Tag{})
+	db.AutoMigrate(&model.User{})
 
 	return db
 }

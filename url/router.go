@@ -15,9 +15,11 @@ func PrepareRouter(db *gorm.DB) *gin.Engine {
 
 	r.Use(database.Middleware(db))
 
+	security := r.Group("/auth")
+	auth.Routes(security)
+
 	rest := r.Group("/api")
 	rest.Use(auth.Middleware())
-
 	api.TagRoutes(rest)
 
 	return r

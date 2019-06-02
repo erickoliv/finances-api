@@ -1,10 +1,7 @@
 package model
 
 import (
-	"errors"
-
 	"github.com/google/uuid"
-	"github.com/jinzhu/gorm"
 )
 
 // Tag to iterate with database
@@ -13,22 +10,6 @@ type Tag struct {
 	Name        string    `json:"name" binding:"required"`
 	Description string    `json:"description"  `
 	Owner       uuid.UUID `gorm:"INDEX,not null" json:"owner" `
-}
-
-func (t *Tag) BeforeCreate(scope *gorm.Scope) (err error) {
-	err = scope.SetColumn("UUID", uuid.New())
-
-	if len(t.Name) == 0 {
-		err = errors.New("name cannot be empty")
-		return
-	}
-
-	//if t.Owner.String() == uuid.New().String() {
-	//	err = errors.New("owner cannot be empty")
-	//	return
-	//}
-
-	return
 }
 
 // TableName returns tag table name
