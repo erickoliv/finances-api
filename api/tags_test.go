@@ -66,3 +66,35 @@ func TestGetTag(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 	assert.Contains(t, w.Body.String(), tagOne["name"])
 }
+
+func TestUpdateTag(t *testing.T) {
+	tag := model.Tag{
+		Name:        "updated name",
+		Description: "a new description",
+	}
+
+	str, _ := json.Marshal(tag)
+	url := fmt.Sprintf("/api/tags/%s", tagOne["uuid"].(string))
+
+	req, _ := http.NewRequest("PUT", url, bytes.NewReader(str))
+	req.Header.Add("Content-Type", "application/json")
+
+	w := httptest.NewRecorder()
+
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+}
+
+func TestDeleteTag(t *testing.T) {
+	url := fmt.Sprintf("/api/tags/%s", tagOne["uuid"].(string))
+	req, _ := http.NewRequest("DELETE", url, nil)
+	w := httptest.NewRecorder()
+	mocket.Catcher.NewMock().
+		WithQuery(`UPDATE "public"."tags" SET "deleted_at"=?  WHERE "public"."tags"."deleted_at" IS NULL AND ((uuid = ?))`).
+		WithRowsNum(1)
+
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusNoContent, w.Code)
+}
