@@ -4,6 +4,7 @@ go 1.12
 
 require (
 	github.com/Selvatico/go-mocket v1.0.7
+	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/erikstmartin/go-testdb v0.0.0-20160219214506-8d10e4a1bae5 // indirect
 	github.com/gin-gonic/gin v1.4.0
 	github.com/google/uuid v1.1.1

@@ -16,7 +16,7 @@ func TestMain(m *testing.M) {
 	mocket.Catcher.Register() // Safe register. Allowed multiple calls to save
 	mocket.Catcher.Logging = true
 	// GORM
-	db, _ := gorm.Open(mocket.DriverName, "connection_string") // Can be any connection string
+	db, _ := gorm.Open(mocket.DriverName, "test") // Can be any connection string
 	defer db.Close()
 
 	router.Use(database.Middleware(db))

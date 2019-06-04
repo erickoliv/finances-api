@@ -10,11 +10,6 @@ import (
 	"github.com/jinzhu/gorm"
 )
 
-// ErrorMessage it's a struct to be used to pass standard error description inside the application
-type ErrorMessage struct {
-	Message string `json:"message"`
-}
-
 // PaginatedMessage is a structure which contains standard attributes to be used on paginated services
 type PaginatedMessage struct {
 	Total int `json:"total"`

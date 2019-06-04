@@ -2,7 +2,8 @@ package auth
 
 import "github.com/gin-gonic/gin"
 
-// Routes register api related services into a provided gin.RouterGroup
+// Routes related to auth package
 func Routes(r *gin.RouterGroup) {
 	r.POST("/register", Register)
+	r.POST("/login", Login)
 }

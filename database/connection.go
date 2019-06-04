@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/ericktm/olivsoft-golang-api/constants"
+	"github.com/ericktm/olivsoft-golang-api/common"
 	"github.com/ericktm/olivsoft-golang-api/model"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
@@ -23,7 +23,7 @@ func PrepareDatabase() *gorm.DB {
 	if err != nil {
 		log.Fatal(err)
 	}
-
+	db.LogMode(true)
 	// database migrations
 	db.AutoMigrate(&model.Tag{})
 	db.AutoMigrate(&model.User{})
@@ -43,7 +43,7 @@ func getEnvConfig(s string) string {
 // Middleware adds a gorm.DB connection pool reference inside gin.Context
 func Middleware(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.Set(constants.DB, db)
+		c.Set(common.DB, db)
 		c.Next()
 	}
 }

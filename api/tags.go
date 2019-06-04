@@ -6,7 +6,7 @@ import (
 
 	"github.com/ericktm/olivsoft-golang-api/model"
 
-	"github.com/ericktm/olivsoft-golang-api/constants"
+	"github.com/ericktm/olivsoft-golang-api/common"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
 )
@@ -22,7 +22,7 @@ func TagRoutes(r *gin.RouterGroup) {
 
 // GetTags return all tags
 func GetTags(c *gin.Context) {
-	db := c.MustGet(constants.DB).(*gorm.DB)
+	db := c.MustGet(common.DB).(*gorm.DB)
 
 	tags := []model.Tag{}
 	query := ExtractFilters(c.Request.URL.Query())
@@ -45,11 +45,11 @@ func GetTags(c *gin.Context) {
 
 // CreateTag can be called to create a new instance of Tag on database, using props provided via http request
 func CreateTag(c *gin.Context) {
-	db := c.MustGet(constants.DB).(*gorm.DB)
+	db := c.MustGet(common.DB).(*gorm.DB)
 	tag := model.Tag{}
 	c.Bind(&tag)
 	if err := db.Save(&tag).Error; err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, ErrorMessage{Message: err.Error()})
+		c.AbortWithStatusJSON(http.StatusInternalServerError, common.ErrorMessage{Message: err.Error()})
 	} else {
 		c.JSON(http.StatusCreated, &tag)
 	}
@@ -57,7 +57,7 @@ func CreateTag(c *gin.Context) {
 
 // GetTag can be called to get a specific tag from the database. The uuid used to query is part of the url
 func GetTag(c *gin.Context) {
-	db := c.MustGet(constants.DB).(*gorm.DB)
+	db := c.MustGet(common.DB).(*gorm.DB)
 	tag := model.Tag{}
 
 	uuid := c.Param("uuid")
@@ -65,7 +65,7 @@ func GetTag(c *gin.Context) {
 	db.Where("uuid = ?", uuid).First(&tag)
 
 	if tag.IsNew() {
-		c.JSON(http.StatusNotFound, ErrorMessage{"tag not found"})
+		c.JSON(http.StatusNotFound, common.ErrorMessage{"tag not found"})
 	} else {
 		c.JSON(http.StatusOK, &tag)
 	}
@@ -73,13 +73,13 @@ func GetTag(c *gin.Context) {
 
 // UpdateTag can be called to update a specific tag. The uuid used to query is part of the url
 func UpdateTag(c *gin.Context) {
-	db := c.MustGet(constants.DB).(*gorm.DB)
+	db := c.MustGet(common.DB).(*gorm.DB)
 	current := model.Tag{}
 	new := model.Tag{}
 
 	// TODO: create validate function to be used for all tag related validations
 	if err := c.Bind(&new); err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, ErrorMessage{Message: err.Error()})
+		c.AbortWithStatusJSON(http.StatusBadRequest, common.ErrorMessage{Message: err.Error()})
 		return
 	}
 
@@ -87,13 +87,13 @@ func UpdateTag(c *gin.Context) {
 	db.Where("uuid = ?", uuid).First(&current)
 
 	if current.IsNew() {
-		c.JSON(http.StatusNotFound, ErrorMessage{"tag not found"})
+		c.JSON(http.StatusNotFound, common.ErrorMessage{"tag not found"})
 	} else {
 		current.Name = new.Name
 		current.Description = new.Description
 
 		if err := db.Save(&current).Error; err != nil {
-			c.AbortWithStatusJSON(http.StatusInternalServerError, ErrorMessage{Message: err.Error()})
+			c.AbortWithStatusJSON(http.StatusInternalServerError, common.ErrorMessage{Message: err.Error()})
 		} else {
 			c.JSON(http.StatusOK, &current)
 		}
@@ -102,7 +102,7 @@ func UpdateTag(c *gin.Context) {
 
 // DeleteTag can be used to logical delete a row tag from the database.
 func DeleteTag(c *gin.Context) {
-	db := c.MustGet(constants.DB).(*gorm.DB)
+	db := c.MustGet(common.DB).(*gorm.DB)
 	uuid := c.Param("uuid")
 	entity := model.Tag{}
 
@@ -112,6 +112,6 @@ func DeleteTag(c *gin.Context) {
 		c.Status(http.StatusNoContent)
 	} else {
 		msg := fmt.Sprintf("%s - ocurrencies: %d", uuid, affected)
-		c.JSON(http.StatusNotFound, ErrorMessage{msg})
+		c.JSON(http.StatusNotFound, common.ErrorMessage{msg})
 	}
 }

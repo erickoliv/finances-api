@@ -11,8 +11,9 @@
 - [x] Dependency Management
 - [x] Create dockerfile
 - [x] Create docker-compose | kubernetes deployment file
+- [x] Create sample tests
 
 #### TO DO
-- [-] Create sample tests
 - [ ] Validate Request Payloads
+- [ ] Better error handling
 - [ ] Implement a Full Token Based Auth
