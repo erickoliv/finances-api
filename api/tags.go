@@ -23,6 +23,9 @@ func TagRoutes(r *gin.RouterGroup) {
 // GetTags return all tags
 func GetTags(c *gin.Context) {
 	db := c.MustGet(common.DB).(*gorm.DB)
+	// user := c.MustGet(common.LoggedUser).(string)
+
+	// println("current user", user)
 
 	tags := []model.Tag{}
 	query := ExtractFilters(c.Request.URL.Query())
