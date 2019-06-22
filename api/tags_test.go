@@ -13,14 +13,14 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var tagOne = map[string]interface{}{"uuid": "3272d69a-e38d-45c6-94fb-4a0dd9e69385", "name": "a test name", "description": "a test description"}
-var tagTwo = map[string]interface{}{"uuid": "3272d69a-e38d-45c6-94fb-4a0dd9e61235", "name": "a two name", "description": ""}
+var tagOne = map[string]interface{}{"uuid": "3272d69a-e38d-45c6-94fb-4a0dd9e69385", "name": "a test name", "description": "a test description", "owner": user.String()}
+var tagTwo = map[string]interface{}{"uuid": "3272d69a-e38d-45c6-94fb-4a0dd9e61235", "name": "a two name", "description": "", "owner": user.String()}
 var singleResult = []map[string]interface{}{tagOne}
 var allRows = []map[string]interface{}{tagOne, tagTwo}
 var count = []map[string]interface{}{{"count(*)": len(allRows)}}
 
 func setupTagsDatabase() {
-	mocket.Catcher.NewMock().WithArgs(tagOne["uuid"].(string)).WithReply(singleResult)
+	mocket.Catcher.NewMock().WithArgs(tagOne["uuid"].(string), tagOne["owner"].(string)).WithReply(singleResult)
 
 	mocket.Catcher.NewMock().WithQuery(`SELECT count(*) FROM "public"."tags"  WHERE "public"."tags"."deleted_at" IS NULL`).WithReply(count)
 	mocket.Catcher.NewMock().WithQuery(`SELECT * FROM "public"."tags"  WHERE "public"."tags"."deleted_at" IS NULL`).WithReply(allRows)
@@ -91,7 +91,7 @@ func TestDeleteTag(t *testing.T) {
 	req, _ := http.NewRequest("DELETE", url, nil)
 	w := httptest.NewRecorder()
 	mocket.Catcher.NewMock().
-		WithQuery(`UPDATE "public"."tags" SET "deleted_at"=?  WHERE "public"."tags"."deleted_at" IS NULL AND ((uuid = ?))`).
+		WithQuery(`UPDATE "public"."tags" SET "deleted_at"=?  WHERE "public"."tags"."deleted_at" IS NULL AND ((uuid = ? AND owner = ?))`).
 		WithRowsNum(1)
 
 	router.ServeHTTP(w, req)

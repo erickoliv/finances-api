@@ -38,7 +38,7 @@ func Middleware() gin.HandlerFunc {
 			return
 		}
 
-		c.Set(common.LoggedUser, claims.Username)
+		c.Set(common.LoggedUser, claims.User)
 		c.Next()
 	}
 }

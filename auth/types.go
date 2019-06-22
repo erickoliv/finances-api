@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/dgrijalva/jwt-go"
+	"github.com/google/uuid"
 )
 
 // Credentials struct used to parse login requests
@@ -21,6 +22,6 @@ func (c *Credentials) Encrypt() {
 
 // JWT
 type Jwt struct {
-	Username string `json:"username"`
+	User uuid.UUID `json:"user"`
 	jwt.StandardClaims
 }

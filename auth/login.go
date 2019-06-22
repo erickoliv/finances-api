@@ -28,7 +28,7 @@ func Login(c *gin.Context) {
 	} else {
 		ttl := time.Now().Add(60 * time.Minute)
 		cookie := &Jwt{
-			Username: credentials.Username,
+			User: user.UUID,
 			StandardClaims: jwt.StandardClaims{
 				// In JWT, the expiry time is expressed as unix milliseconds
 				ExpiresAt: ttl.Unix(),
