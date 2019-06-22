@@ -13,6 +13,10 @@ dev:
 build:
 	go build 
 
+push:
+	docker build . -t ${IMAGE_NAME}:${IMAGE_VERSION}
+	docker push ${IMAGE_NAME}:${IMAGE_VERSION}
+
 test:
 	go test -cover -race ./...
 
