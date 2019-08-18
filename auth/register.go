@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/ericktm/olivsoft-golang-api/common"
@@ -13,7 +14,14 @@ import (
 func Register(c *gin.Context) {
 	db := c.MustGet(common.DB).(*gorm.DB)
 	user := model.User{}
-	c.Bind(&user)
+
+	if err := c.Bind(&user); err != nil {
+		msg := fmt.Sprintf("invalid payload: %v", err)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, common.ErrorMessage{
+			Message: msg,
+		})
+		return
+	}
 
 	credentials := Credentials{
 		Username: user.Username,
@@ -26,7 +34,8 @@ func Register(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, common.ErrorMessage{
 			Message: "registration error",
 		})
-	} else {
-		c.JSON(http.StatusCreated, &user)
+		return
 	}
+
+	c.JSON(http.StatusCreated, &user)
 }
