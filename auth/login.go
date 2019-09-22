@@ -16,6 +16,7 @@ import (
 // Login Route
 func Login(c *gin.Context) {
 	db := c.MustGet(common.DB).(*gorm.DB)
+	salt := os.Getenv(common.AppToken)
 	credentials := Credentials{}
 	user := model.User{}
 
@@ -25,7 +26,7 @@ func Login(c *gin.Context) {
 		})
 		return
 	}
-	credentials.Encrypt()
+	credentials.Encrypt(salt)
 
 	result := db.First(&user, "username = ? AND password = ?", credentials.Username, credentials.Password)
 	if result.RecordNotFound() {

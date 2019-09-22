@@ -5,6 +5,9 @@ services:
     restart: always
     ports:
       - "5432:5432"
+    environment:
+      - 'POSTGRES_USER=${DB_USER}'
+      - 'POSTGRES_PASSWORD=${DB_PASSWORD}' 
   api:
     image: ${IMAGE_NAME}:${IMAGE_VERSION}
     environment:

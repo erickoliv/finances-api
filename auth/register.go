@@ -3,6 +3,7 @@ package auth
 import (
 	"fmt"
 	"net/http"
+	"os"
 
 	"github.com/ericktm/olivsoft-golang-api/common"
 	"github.com/ericktm/olivsoft-golang-api/model"
@@ -13,6 +14,7 @@ import (
 // Register creates a new user
 func Register(c *gin.Context) {
 	db := c.MustGet(common.DB).(*gorm.DB)
+	salt := os.Getenv(common.AppToken)
 	user := model.User{}
 
 	if err := c.Bind(&user); err != nil {
@@ -27,7 +29,7 @@ func Register(c *gin.Context) {
 		Username: user.Username,
 		Password: user.Password,
 	}
-	credentials.Encrypt()
+	credentials.Encrypt(salt)
 
 	user.Password = credentials.Password
 	if err := db.Save(&user).Error; err != nil {
