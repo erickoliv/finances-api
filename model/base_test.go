@@ -1,11 +1,13 @@
 package model
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+)
 
 func TestBaseModel_IsNew(t *testing.T) {
 	new := BaseModel{}
 
-	if !new.IsNew() {
-		t.Errorf("A zero-value model should return true.")
-	}
+	assert.True(t, new.IsNew())
 }
