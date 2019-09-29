@@ -20,7 +20,7 @@ func (c *Credentials) Encrypt(salt string) {
 	c.Password = fmt.Sprintf("%x", hash)
 }
 
-// JWT
+// Jwt struct to generate and validate jtw tokens
 type Jwt struct {
 	User uuid.UUID `json:"user"`
 	jwt.StandardClaims

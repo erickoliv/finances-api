@@ -15,11 +15,13 @@ type BaseModel struct {
 	DeletedAt *time.Time `json:"deleted-at"`
 }
 
-func (t *BaseModel) BeforeCreate(scope *gorm.Scope) (err error) {
+// BeforeCreate execute commands before creating a BaseModel
+func (b BaseModel) BeforeCreate(scope *gorm.Scope) (err error) {
 	err = scope.SetColumn("UUID", uuid.New())
 	return
 }
 
+// IsNew checks if the entity is a new record, without a proper uuid
 func (b BaseModel) IsNew() bool {
 	return b.UUID.String() == "00000000-0000-0000-0000-000000000000"
 }
