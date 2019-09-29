@@ -8,7 +8,7 @@ import (
 	"github.com/ericktm/olivsoft-golang-api/model"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/postgres"
+	_ "github.com/jinzhu/gorm/dialects/postgres" // for pg dialect
 )
 
 // PrepareDatabase is the function designed
@@ -34,9 +34,9 @@ func PrepareDatabase() *gorm.DB {
 func getEnvConfig(s string) string {
 	if value, found := os.LookupEnv(s); found {
 		return value
-	} else {
-		log.Fatalf("Environment variable %s not found", s)
 	}
+
+	log.Fatalf("Environment variable %s not found", s)
 	return ""
 }
 
