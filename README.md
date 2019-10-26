@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.com/erickoliv/finances-api.svg?branch=master)](https://travis-ci.com/erickoliv/finances-api.svg?branch=master)
+[![Build Status](https://travis-ci.com/erickoliv/finances-api.svg?branch=master)](https://travis-ci.com/erickoliv/finances-api)
 [![Go Report Card](https://goreportcard.com/badge/github.com/erickoliv/finances-api)](https://goreportcard.com/report/github.com/erickoliv/finances-api)
 [![HitCount](http://hits.dwyl.io/ericktm/ericktm/olivsoft-golang-api.svg)](http://hits.dwyl.io/ericktm/ericktm/olivsoft-golang-api)
 #### olivsoft-golang-api
