@@ -10,7 +10,8 @@ import (
 type Entry struct {
 	BaseModel
 	Date        time.Time `json:"date" binding:"required"`
-	IsCredit    bool      `json:"isCredit" binding:"required"`
+	Type        bool      `json:"type" binding:"required"`
+	Pending     bool      `json:"pending"`
 	Name        string    `json:"name" binding:"required"`
 	Value       float64   `json:"value" binding:"required"`
 	Description string    `json:"description"  `
