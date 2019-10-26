@@ -18,7 +18,7 @@ push:
 	docker push ${IMAGE_NAME}:${IMAGE_VERSION}
 
 test:
-	go test -cover -race ./...
+	go test -cover -race -coverprofile=coverage.out -covermode=atomic ./...
 
 full-test:
 	rm -f olivsoft-golang-api

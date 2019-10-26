@@ -30,6 +30,7 @@ func PrepareDatabase() *gorm.DB {
 	db.AutoMigrate(&model.Category{})
 	db.AutoMigrate(&model.Account{})
 	db.AutoMigrate(&model.Entry{})
+	db.AutoMigrate(&model.EntryTag{})
 
 	return db
 }
