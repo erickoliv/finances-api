@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.com/ericktm/olivsoft-golang-api.svg?branch=master)](https://travis-ci.com/ericktm/olivsoft-golang-api)
+[![Build Status](https://travis-ci.com/erickoliv/finances-api.svg?branch=master)](https://travis-ci.com/erickoliv/finances-api.svg?branch=master)
 [![HitCount](http://hits.dwyl.io/ericktm/ericktm/olivsoft-golang-api.svg)](http://hits.dwyl.io/ericktm/ericktm/olivsoft-golang-api)
 #### olivsoft-golang-api
 > This is just a personal project I'm using to learn the Go programming language and its libraries.
