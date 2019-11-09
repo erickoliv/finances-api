@@ -1,2 +1,0 @@
-mode: atomic
-/Users/eroberto/projects/olivsoft-golang-api/main.go:10.13,16.2 4 0

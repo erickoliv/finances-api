@@ -13,8 +13,11 @@
 - [x] Create dockerfile
 - [x] Create docker-compose | kubernetes deployment file
 - [x] Create sample tests
+- [x] Implement a Full Token Based Auth
 
 #### TO DO
+- [ ] Remove common and utils packages
+- [ ] Remove DB connection from gin.Context !!!!
 - [ ] Validate Request Payloads
 - [ ] Better error handling
-- [ ] Implement a Full Token Based Auth
+
