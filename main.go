@@ -1,16 +1,16 @@
 package main
 
 import (
+	"github.com/ericktm/olivsoft-golang-api/internal"
 	"log"
-
-	"github.com/ericktm/olivsoft-golang-api/database"
-	"github.com/ericktm/olivsoft-golang-api/url"
+	"os"
 )
 
 func main() {
-	db := database.PrepareDatabase()
-	defer db.Close()
 
-	app := url.PrepareRouter(db)
-	log.Fatal(app.Run())
+	if err := internal.Run(); err != nil {
+		log.Printf("error running application %v", err)
+		os.Exit(1)
+	}
+
 }
