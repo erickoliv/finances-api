@@ -8,7 +8,6 @@ import (
 
 	mocket "github.com/Selvatico/go-mocket"
 	"github.com/ericktm/olivsoft-golang-api/common"
-	"github.com/ericktm/olivsoft-golang-api/database"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
 )
@@ -23,8 +22,7 @@ func TestMain(m *testing.M) {
 	db, _ := gorm.Open(mocket.DriverName, "test") // Can be any connection string
 	defer db.Close()
 
-	router.Use(database.Middleware(db))
-	router.Use(dummyUser())
+	router.Use(dummyMiddleware(db))
 
 	setupTagsDatabase()
 
@@ -32,9 +30,10 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-func dummyUser() gin.HandlerFunc {
+func dummyMiddleware(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 
+		c.Set(common.DB, db)
 		c.Set(common.LoggedUser, user)
 		print(user.String())
 		c.Next()
