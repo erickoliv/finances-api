@@ -1,7 +1,6 @@
 package rest
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/ericktm/olivsoft-golang-api/pkg/domain"
@@ -12,61 +11,57 @@ import (
 	"github.com/jinzhu/gorm"
 )
 
-// AccountRoutes add account related urls inside a gin.router/engine context
-func AccountRoutes(r *gin.RouterGroup) {
-	r.POST("/accounts", CreateAccount)
-	r.GET("/accounts/:uuid", GetAccount)
-	r.PUT("/accounts/:uuid", UpdateAccount)
-	r.DELETE("/accounts/:uuid", DeleteAccount)
-	r.GET("/accounts", GetAccounts)
+type AccountView struct {
+	repo domain.AccountRepository
+}
+
+func MakeAccountView(repo domain.AccountRepository) AccountView {
+	return AccountView{
+		repo: repo,
+	}
 }
 
 // GetAccounts return all accounts
-func GetAccounts(c *gin.Context) {
-	db := c.MustGet(common.DB).(*gorm.DB)
+func (view AccountView) GetAccounts(c *gin.Context) {
 	user := c.MustGet(common.LoggedUser).(uuid.UUID)
-
-	// println("current user", user)
-
-	accounts := []domain.Account{}
 	query := ExtractFilters(c.Request.URL.Query())
 	query.Filters["owner = ?"] = user
 
-	base := query.Build(db.Preloads(&accounts)).Find(&accounts)
-	if base.Error == nil {
-		response := PaginatedMessage{
-			Total: query.Total,
-			Page:  query.Page,
-			Pages: query.Pages,
-			Data:  &accounts,
-			Limit: query.Limit,
-			Count: len(accounts),
-		}
-		c.JSON(http.StatusOK, &response)
-	} else {
-		c.JSON(http.StatusInternalServerError, &base.Error)
+	result, err := view.repo.Filter(c, query)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, err)
+		return
 	}
+
+	response := PaginatedMessage{
+		Total: query.Total,
+		Page:  query.Page,
+		Pages: query.Pages,
+		Data:  &result,
+		Limit: query.Limit,
+		Count: len(result),
+	}
+
+	c.JSON(http.StatusOK, &response)
 }
 
 // CreateAccount can be called to create a new instance of Account on database, using props provided via http request
-func CreateAccount(c *gin.Context) {
-	db := c.MustGet(common.DB).(*gorm.DB)
+func (view AccountView) CreateAccount(c *gin.Context) {
 	user := c.MustGet(common.LoggedUser).(uuid.UUID)
-
 	account := domain.Account{}
-
 	c.Bind(&account)
 	account.Owner = user
 
-	if err := db.Save(&account).Error; err != nil {
+	if err := view.repo.Save(c, account); err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, common.ErrorMessage{Message: err.Error()})
-	} else {
-		c.JSON(http.StatusCreated, &account)
+		return
 	}
+
+	c.JSON(http.StatusCreated, &account)
 }
 
 // GetAccount can be called to get a specific account from the database. The uuid used to query is part of the url
-func GetAccount(c *gin.Context) {
+func (view AccountView) GetAccount(c *gin.Context) {
 	db := c.MustGet(common.DB).(*gorm.DB)
 	user := c.MustGet(common.LoggedUser).(uuid.UUID)
 	account := domain.Account{}
@@ -83,11 +78,7 @@ func GetAccount(c *gin.Context) {
 }
 
 // UpdateAccount can be called to update a specific account. The uuid used to query is part of the url
-func UpdateAccount(c *gin.Context) {
-	db := c.MustGet(common.DB).(*gorm.DB)
-	user := c.MustGet(common.LoggedUser).(uuid.UUID)
-
-	current := domain.Account{}
+func (view AccountView) UpdateAccount(c *gin.Context) {
 	new := domain.Account{}
 
 	// TODO: create validate function to be used for all account related validations
@@ -95,38 +86,47 @@ func UpdateAccount(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusBadRequest, common.ErrorMessage{Message: err.Error()})
 		return
 	}
+	// _ := c.MustGet(common.LoggedUser).(uuid.UUID)
 
-	uuid := c.Param("uuid")
-	db.Where("uuid = ? AND owner = ?", uuid, user).First(&current)
+	pk, err := uuid.Parse(c.Param("uuid"))
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, common.ErrorMessage{Message: err.Error()})
+		return
+	}
+
+	current, err := view.repo.Get(c, pk)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, common.ErrorMessage{Message: err.Error()})
+		return
+	}
 
 	if current.IsNew() {
 		c.JSON(http.StatusNotFound, common.ErrorMessage{"account not found"})
-	} else {
-		current.Name = new.Name
-		current.Description = new.Description
-
-		if err := db.Save(&current).Error; err != nil {
-			c.AbortWithStatusJSON(http.StatusInternalServerError, common.ErrorMessage{Message: err.Error()})
-		} else {
-			c.JSON(http.StatusOK, &current)
-		}
+		return
 	}
+
+	current.Name = new.Name
+	current.Description = new.Description
+
+	if err := view.repo.Save(c, current); err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, common.ErrorMessage{Message: err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, &current)
 }
 
 // DeleteAccount can be used to logical delete a row account from the database.
-func DeleteAccount(c *gin.Context) {
-	db := c.MustGet(common.DB).(*gorm.DB)
-	user := c.MustGet(common.LoggedUser).(uuid.UUID)
+func (view AccountView) DeleteAccount(c *gin.Context) {
+	// user := c.MustGet(common.LoggedUser).(uuid.UUID)
 
-	uuid := c.Param("uuid")
-	entity := domain.Account{}
+	pk := uuid.MustParse(c.Param("uuid")) // fix this
+	// entity := domain.Account{}
 
-	affected := db.Where("uuid = ? AND owner = ?", uuid, user).Delete(&entity).RowsAffected
-
-	if affected > 0 {
-		c.Status(http.StatusNoContent)
-	} else {
-		msg := fmt.Sprintf("%s - ocurrencies: %d", uuid, affected)
-		c.JSON(http.StatusNotFound, common.ErrorMessage{msg})
+	if err := view.repo.Delete(c, pk); err != nil {
+		c.JSON(http.StatusNotFound, common.ErrorMessage{err.Error()})
+		return
 	}
+
+	c.Status(http.StatusNoContent)
 }

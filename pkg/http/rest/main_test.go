@@ -26,7 +26,7 @@ func TestMain(m *testing.M) {
 
 	setupTagsDatabase()
 
-	Routes(router.Group("api"))
+	// Routes(router.Group("api"))
 	os.Exit(m.Run())
 }
 

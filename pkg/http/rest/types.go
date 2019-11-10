@@ -2,12 +2,10 @@ package rest
 
 import (
 	"fmt"
-	"math"
+	"github.com/ericktm/olivsoft-golang-api/pkg/domain"
 	"net/url"
 	"strconv"
 	"strings"
-
-	"github.com/jinzhu/gorm"
 )
 
 // PaginatedMessage is a structure which contains standard attributes to be used on paginated services
@@ -22,19 +20,9 @@ type PaginatedMessage struct {
 	Data  interface{} `json:"data"`
 }
 
-// QueryData is structure which contains standard atributes to parse http parameters for API filter, search and pagination
-type QueryData struct {
-	Page    int
-	Pages   int
-	Total   int
-	Limit   int
-	Sort    string
-	Filters map[string]interface{}
-}
-
 // ExtractFilters can be used to parse query parameters and return a QueryData object, useful to query, filter and paginate requests
-func ExtractFilters(f url.Values) QueryData {
-	q := QueryData{
+func ExtractFilters(f url.Values) domain.QueryData {
+	q := domain.QueryData{
 		Page:  1,
 		Limit: 100,
 	}
@@ -79,19 +67,4 @@ func ExtractFilters(f url.Values) QueryData {
 	q.Filters = filters
 
 	return q
-}
-
-// Build is the function where the QueryData attributes are translated into a gorm.DB instance. Can be used to generic filter, order and pagination
-func (q *QueryData) Build(db *gorm.DB) *gorm.DB {
-	base := db
-
-	for k, v := range q.Filters {
-		base = base.Where(k, v)
-	}
-
-	base.Count(&q.Total)
-	base = base.Offset(q.Limit * (q.Page - 1)).Limit(q.Limit).Order(q.Sort)
-	q.Pages = int(math.Ceil(float64(q.Total) / float64(q.Limit)))
-
-	return base
 }
