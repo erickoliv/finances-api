@@ -56,13 +56,13 @@ package rest
 // 	entry := domain.Entry{}
 
 // 	if err := c.Bind(&entry); err != nil {
-// 		c.AbortWithStatusJSON(http.StatusInternalServerError, domain.ErrorMessage{Message: err.Error()})
+// 		c.AbortWithStatusJSON(http.StatusInternalServerError, rest.ErrorMessage{Message: err.Error()})
 // 		return
 // 	}
 // 	entry.Owner = user
 
 // 	if err := db.Save(&entry).Error; err != nil {
-// 		c.AbortWithStatusJSON(http.StatusInternalServerError, domain.ErrorMessage{Message: err.Error()})
+// 		c.AbortWithStatusJSON(http.StatusInternalServerError, rest.ErrorMessage{Message: err.Error()})
 // 		return
 // 	}
 
@@ -80,7 +80,7 @@ package rest
 // 	db.Where("uuid = ? AND owner = ?", uuid, user).First(&entry)
 
 // 	if entry.IsNew() {
-// 		c.JSON(http.StatusNotFound, domain.ErrorMessage{"entry not found"})
+// 		c.JSON(http.StatusNotFound, rest.ErrorMessage{"entry not found"})
 // 	} else {
 // 		c.JSON(http.StatusOK, &entry)
 // 	}
@@ -96,7 +96,7 @@ package rest
 
 // 	// TODO: create validate function to be used for all entry related validations
 // 	if err := c.Bind(&new); err != nil {
-// 		c.AbortWithStatusJSON(http.StatusBadRequest, domain.ErrorMessage{Message: err.Error()})
+// 		c.AbortWithStatusJSON(http.StatusBadRequest, rest.ErrorMessage{Message: err.Error()})
 // 		return
 // 	}
 
@@ -104,13 +104,13 @@ package rest
 // 	db.Where("uuid = ? AND owner = ?", uuid, user).First(&current)
 
 // 	if current.IsNew() {
-// 		c.JSON(http.StatusNotFound, domain.ErrorMessage{"entry not found"})
+// 		c.JSON(http.StatusNotFound, rest.ErrorMessage{"entry not found"})
 // 	} else {
 // 		current.Name = new.Name
 // 		current.Description = new.Description
 
 // 		if err := db.Save(&current).Error; err != nil {
-// 			c.AbortWithStatusJSON(http.StatusInternalServerError, domain.ErrorMessage{Message: err.Error()})
+// 			c.AbortWithStatusJSON(http.StatusInternalServerError, rest.ErrorMessage{Message: err.Error()})
 // 		} else {
 // 			c.JSON(http.StatusOK, &current)
 // 		}
@@ -131,6 +131,6 @@ package rest
 // 		c.Status(http.StatusNoContent)
 // 	} else {
 // 		msg := fmt.Sprintf("%s - ocurrencies: %d", uuid, affected)
-// 		c.JSON(http.StatusNotFound, domain.ErrorMessage{msg})
+// 		c.JSON(http.StatusNotFound, rest.ErrorMessage{msg})
 // 	}
 // }

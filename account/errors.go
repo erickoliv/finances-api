@@ -1,7 +1,7 @@
 package account
 
-import "github.com/erickoliv/finances-api/domain"
+import "github.com/erickoliv/finances-api/pkg/http/rest"
 
 var (
-	accountNotFound = domain.ErrorMessage{Message: "account not found"}
+	accountNotFound = rest.ErrorMessage{Message: "account not found"}
 )

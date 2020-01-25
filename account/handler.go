@@ -23,7 +23,6 @@ func MakeAccountView(repo domain.AccountRepository) AccountView {
 	}
 }
 
-
 func (view handler) Router(group *gin.RouterGroup) {
 	group.GET("/accounts", view.GetAccounts)
 	group.GET("/accounts/:uuid", view.GetAccount)
@@ -36,7 +35,7 @@ func (view handler) Router(group *gin.RouterGroup) {
 func (view handler) GetAccounts(c *gin.Context) {
 	user, err := rest.ExtractUser(c)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, domain.ErrorMessage{Message: err.Error()})
+		c.AbortWithStatusJSON(http.StatusInternalServerError, rest.ErrorMessage{Message: err.Error()})
 		return
 	}
 
@@ -73,7 +72,7 @@ func (view handler) CreateAccount(c *gin.Context) {
 
 	account.Owner = user
 	if err := view.repo.Save(c, account); err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, domain.ErrorMessage{Message: err.Error()})
+		c.AbortWithStatusJSON(http.StatusInternalServerError, rest.ErrorMessage{Message: err.Error()})
 		return
 	}
 
@@ -84,13 +83,13 @@ func (view handler) CreateAccount(c *gin.Context) {
 func (view handler) GetAccount(c *gin.Context) {
 	user, err := rest.ExtractUser(c)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, domain.ErrorMessage{Message: err.Error()})
+		c.AbortWithStatusJSON(http.StatusInternalServerError, rest.ErrorMessage{Message: err.Error()})
 		return
 	}
 
 	pk, err := rest.ExtractUUID(c)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, domain.ErrorMessage{Message: err.Error()})
+		c.AbortWithStatusJSON(http.StatusInternalServerError, rest.ErrorMessage{Message: err.Error()})
 		return
 	}
 
@@ -114,24 +113,24 @@ func (view handler) UpdateAccount(c *gin.Context) {
 
 	// TODO: create validate function to be used for all account related validations
 	if err := c.Bind(&new); err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, domain.ErrorMessage{Message: err.Error()})
+		c.AbortWithStatusJSON(http.StatusBadRequest, rest.ErrorMessage{Message: err.Error()})
 		return
 	}
 	user, err := rest.ExtractUser(c)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, domain.ErrorMessage{Message: err.Error()})
+		c.AbortWithStatusJSON(http.StatusInternalServerError, rest.ErrorMessage{Message: err.Error()})
 		return
 	}
 
 	pk, err := rest.ExtractUUID(c)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, domain.ErrorMessage{Message: err.Error()})
+		c.AbortWithStatusJSON(http.StatusInternalServerError, rest.ErrorMessage{Message: err.Error()})
 		return
 	}
 
 	current, err := view.repo.Get(c, pk, user)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, domain.ErrorMessage{Message: err.Error()})
+		c.AbortWithStatusJSON(http.StatusInternalServerError, rest.ErrorMessage{Message: err.Error()})
 		return
 	}
 
@@ -144,7 +143,7 @@ func (view handler) UpdateAccount(c *gin.Context) {
 	current.Description = new.Description
 
 	if err := view.repo.Save(c, current); err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, domain.ErrorMessage{Message: err.Error()})
+		c.AbortWithStatusJSON(http.StatusInternalServerError, rest.ErrorMessage{Message: err.Error()})
 		return
 	}
 
@@ -159,7 +158,7 @@ func (view handler) DeleteAccount(c *gin.Context) {
 	// entity := domain.Account{}
 
 	if err := view.repo.Delete(c, pk); err != nil {
-		c.AbortWithStatusJSON(http.StatusNotFound, domain.ErrorMessage{err.Error()})
+		c.AbortWithStatusJSON(http.StatusNotFound, rest.ErrorMessage{err.Error()})
 		return
 	}
 

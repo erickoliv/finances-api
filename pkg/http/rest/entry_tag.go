@@ -53,12 +53,12 @@ package rest
 // 	entryTag := domain.EntryTag{}
 
 // 	if err := c.Bind(&entryTag); err != nil {
-// 		c.AbortWithStatusJSON(http.StatusInternalServerError, domain.ErrorMessage{Message: err.Error()})
+// 		c.AbortWithStatusJSON(http.StatusInternalServerError, rest.ErrorMessage{Message: err.Error()})
 // 		return
 // 	}
 
 // 	if err := db.Save(&entryTag).Error; err != nil {
-// 		c.AbortWithStatusJSON(http.StatusInternalServerError, domain.ErrorMessage{Message: err.Error()})
+// 		c.AbortWithStatusJSON(http.StatusInternalServerError, rest.ErrorMessage{Message: err.Error()})
 // 	} else {
 // 		c.JSON(http.StatusCreated, &entryTag)
 // 	}
@@ -75,7 +75,7 @@ package rest
 // 	db.Where("uuid = ? AND owner = ?", uuid, user).First(&entryTag)
 
 // 	if entryTag.IsNew() {
-// 		c.JSON(http.StatusNotFound, domain.ErrorMessage{"entryTag not found"})
+// 		c.JSON(http.StatusNotFound, rest.ErrorMessage{"entryTag not found"})
 // 	} else {
 // 		c.JSON(http.StatusOK, &entryTag)
 // 	}
@@ -95,6 +95,6 @@ package rest
 // 		c.Status(http.StatusNoContent)
 // 	} else {
 // 		msg := fmt.Sprintf("%s - ocurrencies: %d", uuid, affected)
-// 		c.JSON(http.StatusNotFound, domain.ErrorMessage{msg})
+// 		c.JSON(http.StatusNotFound, rest.ErrorMessage{msg})
 // 	}
 // }

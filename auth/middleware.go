@@ -6,6 +6,7 @@ import (
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/erickoliv/finances-api/domain"
+	"github.com/erickoliv/finances-api/pkg/http/rest"
 	"github.com/gin-gonic/gin"
 )
 
@@ -18,7 +19,7 @@ func Middleware() gin.HandlerFunc {
 		cookie, err := c.Cookie(domain.AuthCookie)
 
 		if err != nil {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, domain.ErrorMessage{Message: "auth cookie missing"})
+			c.AbortWithStatusJSON(http.StatusUnauthorized, rest.ErrorMessage{Message: "auth cookie missing"})
 			return
 		}
 
@@ -29,12 +30,12 @@ func Middleware() gin.HandlerFunc {
 
 		if err != nil {
 			println(err.Error())
-			c.AbortWithStatusJSON(http.StatusUnauthorized, domain.ErrorMessage{Message: err.Error()})
+			c.AbortWithStatusJSON(http.StatusUnauthorized, rest.ErrorMessage{Message: err.Error()})
 			return
 		}
 
 		if !tkn.Valid {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, domain.ErrorMessage{Message: "invalid token"})
+			c.AbortWithStatusJSON(http.StatusUnauthorized, rest.ErrorMessage{Message: "invalid token"})
 			return
 		}
 
