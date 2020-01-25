@@ -23,9 +23,6 @@ func MakeAccountView(repo domain.AccountRepository) AccountView {
 	}
 }
 
-var (
-	accountNotFound = domain.ErrorMessage{Message: "account not found"}
-)
 
 func (view handler) Router(group *gin.RouterGroup) {
 	group.GET("/accounts", view.GetAccounts)
