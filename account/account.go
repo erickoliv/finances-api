@@ -1,6 +1,7 @@
-package rest
+package account
 
 import (
+	"github.com/erickoliv/finances-api/pkg/http/rest"
 	"net/http"
 
 	"github.com/erickoliv/finances-api/domain"
@@ -36,13 +37,13 @@ func (view handler) Router(group *gin.RouterGroup) {
 
 // GetAccounts return all accounts
 func (view handler) GetAccounts(c *gin.Context) {
-	user, err := extractUser(c)
+	user, err := rest.ExtractUser(c)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, domain.ErrorMessage{Message: err.Error()})
 		return
 	}
 
-	query := ExtractFilters(c.Request.URL.Query())
+	query := rest.ExtractFilters(c.Request.URL.Query())
 	query.Filters["owner = ?"] = user
 
 	result, err := view.repo.Filter(c, query)
@@ -51,7 +52,7 @@ func (view handler) GetAccounts(c *gin.Context) {
 		return
 	}
 
-	response := PaginatedMessage{
+	response := rest.PaginatedMessage{
 		Total: query.Total,
 		Page:  query.Page,
 		Pages: query.Pages,
@@ -84,13 +85,13 @@ func (view handler) CreateAccount(c *gin.Context) {
 
 // GetAccount can be called to get a specific account from the database. The uuid used to query is part of the url
 func (view handler) GetAccount(c *gin.Context) {
-	user, err := extractUser(c)
+	user, err := rest.ExtractUser(c)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, domain.ErrorMessage{Message: err.Error()})
 		return
 	}
 
-	pk, err := extractUUID(c)
+	pk, err := rest.ExtractUUID(c)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, domain.ErrorMessage{Message: err.Error()})
 		return
@@ -119,13 +120,13 @@ func (view handler) UpdateAccount(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusBadRequest, domain.ErrorMessage{Message: err.Error()})
 		return
 	}
-	user, err := extractUser(c)
+	user, err := rest.ExtractUser(c)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, domain.ErrorMessage{Message: err.Error()})
 		return
 	}
 
-	pk, err := extractUUID(c)
+	pk, err := rest.ExtractUUID(c)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, domain.ErrorMessage{Message: err.Error()})
 		return
