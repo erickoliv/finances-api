@@ -2,7 +2,7 @@ package internal
 
 import (
 	"github.com/erickoliv/finances-api/internal/db"
-	"github.com/erickoliv/finances-api/pkg/http/auth"
+	"github.com/erickoliv/finances-api/auth"
 	"github.com/erickoliv/finances-api/pkg/http/index"
 	"github.com/erickoliv/finances-api/pkg/http/rest"
 	"github.com/erickoliv/finances-api/pkg/sql"
