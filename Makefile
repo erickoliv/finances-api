@@ -7,7 +7,7 @@ run:
 	go run main.go
 
 dev:
-	rm -f olivsoft-golang-api
+	rm -f finances-api
 	docker-compose up --build
 
 build:
@@ -21,5 +21,5 @@ test:
 	go test -cover -race -coverprofile=coverage.out -covermode=atomic ./...
 
 full-test:
-	rm -f olivsoft-golang-api
+	rm -f finances-api
 	docker-compose up --build --force-recreate

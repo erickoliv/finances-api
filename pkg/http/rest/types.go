@@ -1,13 +1,14 @@
 package rest
 
 import (
+	"errors"
 	"fmt"
-	"math"
+	"github.com/erickoliv/finances-api/domain"
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"net/url"
 	"strconv"
 	"strings"
-
-	"github.com/jinzhu/gorm"
 )
 
 // PaginatedMessage is a structure which contains standard attributes to be used on paginated services
@@ -22,19 +23,9 @@ type PaginatedMessage struct {
 	Data  interface{} `json:"data"`
 }
 
-// QueryData is structure which contains standard atributes to parse http parameters for API filter, search and pagination
-type QueryData struct {
-	Page    int
-	Pages   int
-	Total   int
-	Limit   int
-	Sort    string
-	Filters map[string]interface{}
-}
-
-// ExtractFilters can be used to parse query parameters and return a QueryData object, useful to query, filter and paginate requests
-func ExtractFilters(f url.Values) QueryData {
-	q := QueryData{
+// ExtractFilters can be used to parse query parameters and return a Query object, useful to query, filter and paginate requests
+func ExtractFilters(f url.Values) domain.Query {
+	q := domain.Query{
 		Page:  1,
 		Limit: 100,
 	}
@@ -81,17 +72,26 @@ func ExtractFilters(f url.Values) QueryData {
 	return q
 }
 
-// Build is the function where the QueryData attributes are translated into a gorm.DB instance. Can be used to generic filter, order and pagination
-func (q *QueryData) Build(db *gorm.DB) *gorm.DB {
-	base := db
-
-	for k, v := range q.Filters {
-		base = base.Where(k, v)
+func ExtractUser(c *gin.Context) (uuid.UUID, error) {
+	user, found := c.Get(domain.LoggedUser)
+	if !found {
+		return uuid.New(), errors.New("user not present in context")
 	}
 
-	base.Count(&q.Total)
-	base = base.Offset(q.Limit * (q.Page - 1)).Limit(q.Limit).Order(q.Sort)
-	q.Pages = int(math.Ceil(float64(q.Total) / float64(q.Limit)))
+	pk, ok := user.(uuid.UUID)
+	if !ok {
+		return uuid.New(), errors.New("user in context is invalid")
+	}
 
-	return base
+	return pk, nil
+}
+
+func ExtractUUID(c *gin.Context) (uuid.UUID, error) {
+
+	pk, err := uuid.Parse(c.Param("uuid"))
+	if err != nil {
+		return uuid.New(), errors.New("uuid parameter is invalid")
+	}
+
+	return pk, nil
 }

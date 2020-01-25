@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/ericktm/olivsoft-golang-api/internal"
+	"github.com/erickoliv/finances-api/internal"
 	"log"
 	"os"
 )

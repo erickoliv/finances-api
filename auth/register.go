@@ -5,21 +5,20 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/ericktm/olivsoft-golang-api/common"
-	"github.com/ericktm/olivsoft-golang-api/pkg/domain"
+	"github.com/erickoliv/finances-api/domain"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
 )
 
 // Register creates a new user
 func Register(c *gin.Context) {
-	db := c.MustGet(common.DB).(*gorm.DB)
-	salt := os.Getenv(common.AppToken)
+	db := c.MustGet(domain.DB).(*gorm.DB)
+	salt := os.Getenv(domain.AppToken)
 	user := domain.User{}
 
 	if err := c.Bind(&user); err != nil {
 		msg := fmt.Sprintf("invalid payload: %v", err)
-		c.AbortWithStatusJSON(http.StatusInternalServerError, common.ErrorMessage{
+		c.AbortWithStatusJSON(http.StatusInternalServerError, domain.ErrorMessage{
 			Message: msg,
 		})
 		return
@@ -33,7 +32,7 @@ func Register(c *gin.Context) {
 
 	user.Password = credentials.Password
 	if err := db.Save(&user).Error; err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, common.ErrorMessage{
+		c.AbortWithStatusJSON(http.StatusInternalServerError, domain.ErrorMessage{
 			Message: "registration error",
 		})
 		return

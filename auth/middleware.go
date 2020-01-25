@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/dgrijalva/jwt-go"
-	"github.com/ericktm/olivsoft-golang-api/common"
+	"github.com/erickoliv/finances-api/domain"
 	"github.com/gin-gonic/gin"
 )
 
@@ -15,10 +15,10 @@ func Middleware() gin.HandlerFunc {
 	envToken := os.Getenv("APP_TOKEN")
 
 	return func(c *gin.Context) {
-		cookie, err := c.Cookie(common.AuthCookie)
+		cookie, err := c.Cookie(domain.AuthCookie)
 
 		if err != nil {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, common.ErrorMessage{Message: "auth cookie missing"})
+			c.AbortWithStatusJSON(http.StatusUnauthorized, domain.ErrorMessage{Message: "auth cookie missing"})
 			return
 		}
 
@@ -29,16 +29,16 @@ func Middleware() gin.HandlerFunc {
 
 		if err != nil {
 			println(err.Error())
-			c.AbortWithStatusJSON(http.StatusUnauthorized, common.ErrorMessage{Message: err.Error()})
+			c.AbortWithStatusJSON(http.StatusUnauthorized, domain.ErrorMessage{Message: err.Error()})
 			return
 		}
 
 		if !tkn.Valid {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, common.ErrorMessage{Message: "invalid token"})
+			c.AbortWithStatusJSON(http.StatusUnauthorized, domain.ErrorMessage{Message: "invalid token"})
 			return
 		}
 
-		c.Set(common.LoggedUser, claims.User)
+		c.Set(domain.LoggedUser, claims.User)
 		c.Next()
 	}
 }
