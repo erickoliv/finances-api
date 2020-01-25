@@ -4,10 +4,10 @@ package rest
 // 	"fmt"
 // 	"net/http"
 
-// 	"github.com/ericktm/olivsoft-golang-api/pkg/domain"
+// 	"github.com/erickoliv/finances-api/domain"
 // 	"github.com/google/uuid"
 
-// 	"github.com/ericktm/olivsoft-golang-api/common"
+// 	"github.com/erickoliv/finances-api/domain"
 // 	"github.com/gin-gonic/gin"
 // 	"github.com/jinzhu/gorm"
 // )
@@ -23,8 +23,8 @@ package rest
 
 // // GetCategories return all categories
 // func GetCategories(c *gin.Context) {
-// 	db := c.MustGet(common.DB).(*gorm.DB)
-// 	user := c.MustGet(common.LoggedUser).(uuid.UUID)
+// 	db := c.MustGet(domain.DB).(*gorm.DB)
+// 	user := c.MustGet(domain.LoggedUser).(uuid.UUID)
 
 // 	// println("current user", user)
 
@@ -50,8 +50,8 @@ package rest
 
 // // CreateCategory can be called to create a new instance of Category on database, using props provided via http request
 // func CreateCategory(c *gin.Context) {
-// 	db := c.MustGet(common.DB).(*gorm.DB)
-// 	user := c.MustGet(common.LoggedUser).(uuid.UUID)
+// 	db := c.MustGet(domain.DB).(*gorm.DB)
+// 	user := c.MustGet(domain.LoggedUser).(uuid.UUID)
 
 // 	category := domain.Category{}
 
@@ -59,7 +59,7 @@ package rest
 // 	category.Owner = user
 
 // 	if err := db.Save(&category).Error; err != nil {
-// 		c.AbortWithStatusJSON(http.StatusInternalServerError, common.ErrorMessage{Message: err.Error()})
+// 		c.AbortWithStatusJSON(http.StatusInternalServerError, domain.ErrorMessage{Message: err.Error()})
 // 	} else {
 // 		c.JSON(http.StatusCreated, &category)
 // 	}
@@ -67,8 +67,8 @@ package rest
 
 // // GetCategory can be called to get a specific category from the database. The uuid used to query is part of the url
 // func GetCategory(c *gin.Context) {
-// 	db := c.MustGet(common.DB).(*gorm.DB)
-// 	user := c.MustGet(common.LoggedUser).(uuid.UUID)
+// 	db := c.MustGet(domain.DB).(*gorm.DB)
+// 	user := c.MustGet(domain.LoggedUser).(uuid.UUID)
 // 	category := domain.Category{}
 
 // 	uuid := c.Param("uuid")
@@ -76,7 +76,7 @@ package rest
 // 	db.Where("uuid = ? AND owner = ?", uuid, user).First(&category)
 
 // 	if category.IsNew() {
-// 		c.JSON(http.StatusNotFound, common.ErrorMessage{"category not found"})
+// 		c.JSON(http.StatusNotFound, domain.ErrorMessage{"category not found"})
 // 	} else {
 // 		c.JSON(http.StatusOK, &category)
 // 	}
@@ -84,15 +84,15 @@ package rest
 
 // // UpdateCategory can be called to update a specific category. The uuid used to query is part of the url
 // func UpdateCategory(c *gin.Context) {
-// 	db := c.MustGet(common.DB).(*gorm.DB)
-// 	user := c.MustGet(common.LoggedUser).(uuid.UUID)
+// 	db := c.MustGet(domain.DB).(*gorm.DB)
+// 	user := c.MustGet(domain.LoggedUser).(uuid.UUID)
 
 // 	current := domain.Category{}
 // 	new := domain.Category{}
 
 // 	// TODO: create validate function to be used for all category related validations
 // 	if err := c.Bind(&new); err != nil {
-// 		c.AbortWithStatusJSON(http.StatusBadRequest, common.ErrorMessage{Message: err.Error()})
+// 		c.AbortWithStatusJSON(http.StatusBadRequest, domain.ErrorMessage{Message: err.Error()})
 // 		return
 // 	}
 
@@ -100,13 +100,13 @@ package rest
 // 	db.Where("uuid = ? AND owner = ?", uuid, user).First(&current)
 
 // 	if current.IsNew() {
-// 		c.JSON(http.StatusNotFound, common.ErrorMessage{"category not found"})
+// 		c.JSON(http.StatusNotFound, domain.ErrorMessage{"category not found"})
 // 	} else {
 // 		current.Name = new.Name
 // 		current.Description = new.Description
 
 // 		if err := db.Save(&current).Error; err != nil {
-// 			c.AbortWithStatusJSON(http.StatusInternalServerError, common.ErrorMessage{Message: err.Error()})
+// 			c.AbortWithStatusJSON(http.StatusInternalServerError, domain.ErrorMessage{Message: err.Error()})
 // 		} else {
 // 			c.JSON(http.StatusOK, &current)
 // 		}
@@ -115,8 +115,8 @@ package rest
 
 // // DeleteCategory can be used to logical delete a row category from the database.
 // func DeleteCategory(c *gin.Context) {
-// 	db := c.MustGet(common.DB).(*gorm.DB)
-// 	user := c.MustGet(common.LoggedUser).(uuid.UUID)
+// 	db := c.MustGet(domain.DB).(*gorm.DB)
+// 	user := c.MustGet(domain.LoggedUser).(uuid.UUID)
 
 // 	uuid := c.Param("uuid")
 // 	entity := domain.Category{}
@@ -127,6 +127,6 @@ package rest
 // 		c.Status(http.StatusNoContent)
 // 	} else {
 // 		msg := fmt.Sprintf("%s - ocurrencies: %d", uuid, affected)
-// 		c.JSON(http.StatusNotFound, common.ErrorMessage{msg})
+// 		c.JSON(http.StatusNotFound, domain.ErrorMessage{msg})
 // 	}
 // }

@@ -1,13 +1,13 @@
 package sql
 
 import (
-	"github.com/ericktm/olivsoft-golang-api/pkg/domain"
+	"github.com/erickoliv/finances-api/domain"
 	"github.com/jinzhu/gorm"
 	"math"
 )
 
-// Build is the function where the QueryData attributes are translated into a gorm.DB instance. Can be used to generic filter, order and pagination
-func BuildQuery(base *gorm.DB, q domain.QueryData) *gorm.DB {
+// Build is the function where the Query attributes are translated into a gorm.DB instance. Can be used to generic filter, order and pagination
+func BuildQuery(base *gorm.DB, q domain.Query) *gorm.DB {
 	for k, v := range q.Filters {
 		base = base.Where(k, v)
 	}

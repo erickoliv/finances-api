@@ -1,8 +1,11 @@
 package rest
 
 import (
+	"errors"
 	"fmt"
-	"github.com/ericktm/olivsoft-golang-api/pkg/domain"
+	"github.com/erickoliv/finances-api/domain"
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"net/url"
 	"strconv"
 	"strings"
@@ -20,9 +23,9 @@ type PaginatedMessage struct {
 	Data  interface{} `json:"data"`
 }
 
-// ExtractFilters can be used to parse query parameters and return a QueryData object, useful to query, filter and paginate requests
-func ExtractFilters(f url.Values) domain.QueryData {
-	q := domain.QueryData{
+// ExtractFilters can be used to parse query parameters and return a Query object, useful to query, filter and paginate requests
+func ExtractFilters(f url.Values) domain.Query {
+	q := domain.Query{
 		Page:  1,
 		Limit: 100,
 	}
@@ -67,4 +70,28 @@ func ExtractFilters(f url.Values) domain.QueryData {
 	q.Filters = filters
 
 	return q
+}
+
+func extractUser(c *gin.Context) (uuid.UUID, error) {
+	user, found := c.Get(domain.LoggedUser)
+	if !found {
+		return uuid.New(), errors.New("user not present in context")
+	}
+
+	pk, ok := user.(uuid.UUID)
+	if !ok {
+		return uuid.New(), errors.New("user in context is invalid")
+	}
+
+	return pk, nil
+}
+
+func extractUUID(c *gin.Context) (uuid.UUID, error) {
+
+	pk, err := uuid.Parse(c.Param("uuid"))
+	if err != nil {
+		return uuid.New(), errors.New("uuid parameter is invalid")
+	}
+
+	return pk, nil
 }

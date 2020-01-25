@@ -7,21 +7,20 @@ import (
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
-	"github.com/ericktm/olivsoft-golang-api/common"
-	"github.com/ericktm/olivsoft-golang-api/pkg/domain"
+	"github.com/erickoliv/finances-api/domain"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
 )
 
 // Login Route
 func Login(c *gin.Context) {
-	db := c.MustGet(common.DB).(*gorm.DB)
-	salt := os.Getenv(common.AppToken)
+	db := c.MustGet(domain.DB).(*gorm.DB)
+	salt := os.Getenv(domain.AppToken)
 	credentials := Credentials{}
 	user := domain.User{}
 
 	if err := c.Bind(&credentials); err != nil {
-		c.AbortWithStatusJSON(http.StatusUnauthorized, common.ErrorMessage{
+		c.AbortWithStatusJSON(http.StatusUnauthorized, domain.ErrorMessage{
 			Message: "invalid payload",
 		})
 		return
@@ -30,7 +29,7 @@ func Login(c *gin.Context) {
 
 	result := db.First(&user, "username = ? AND password = ?", credentials.Username, credentials.Password)
 	if result.RecordNotFound() {
-		c.AbortWithStatusJSON(http.StatusUnauthorized, common.ErrorMessage{
+		c.AbortWithStatusJSON(http.StatusUnauthorized, domain.ErrorMessage{
 			Message: "login denied. Check username or password",
 		})
 		return
@@ -38,7 +37,7 @@ func Login(c *gin.Context) {
 
 	if result.Error != nil {
 		fmt.Printf("%v - \n", result.Error.Error())
-		c.AbortWithStatusJSON(http.StatusInternalServerError, common.ErrorMessage{
+		c.AbortWithStatusJSON(http.StatusInternalServerError, domain.ErrorMessage{
 			Message: "authentication error. Check logs or contact system admin",
 		})
 		return
@@ -55,15 +54,15 @@ func Login(c *gin.Context) {
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, cookie)
 
-	key := []byte(os.Getenv(common.AppToken))
+	key := []byte(os.Getenv(domain.AppToken))
 	if str, err := token.SignedString(key); err != nil {
 		// If there is an error in creating the JWT return an internal server error
-		c.AbortWithStatusJSON(http.StatusUnauthorized, common.ErrorMessage{
+		c.AbortWithStatusJSON(http.StatusUnauthorized, domain.ErrorMessage{
 			Message: err.Error(),
 		})
 	} else {
 		expiration := int(ttl.Sub(time.Now()).Seconds())
-		c.SetCookie(common.AuthCookie, str, expiration, "/", "", false, true)
+		c.SetCookie(domain.AuthCookie, str, expiration, "/", "", false, true)
 		c.JSON(http.StatusOK, ":)")
 	}
 

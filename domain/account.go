@@ -20,7 +20,7 @@ func (Account) TableName() string {
 
 type AccountRepository interface {
 	Delete(context.Context, uuid.UUID) error
-	Filter(context.Context, QueryData) ([]Account, error)
-	Get(context.Context, uuid.UUID) (Account, error)
-	Save(context.Context, Account) error
+	Filter(context.Context, Query) ([]Account, error)
+	Get(context.Context, uuid.UUID, uuid.UUID) (*Account, error)
+	Save(context.Context, *Account) error
 }

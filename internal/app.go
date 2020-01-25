@@ -1,16 +1,18 @@
 package internal
 
 import (
-	"github.com/ericktm/olivsoft-golang-api/internal/db"
-	"github.com/ericktm/olivsoft-golang-api/pkg/http/auth"
-	"github.com/ericktm/olivsoft-golang-api/pkg/http/index"
-	"github.com/ericktm/olivsoft-golang-api/pkg/http/rest"
-	"github.com/ericktm/olivsoft-golang-api/pkg/sql"
+	"github.com/erickoliv/finances-api/internal/db"
+	"github.com/erickoliv/finances-api/pkg/http/auth"
+	"github.com/erickoliv/finances-api/pkg/http/index"
+	"github.com/erickoliv/finances-api/pkg/http/rest"
+	"github.com/erickoliv/finances-api/pkg/sql"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
 )
 
 func buildRouter(conn *gorm.DB) *gin.Engine {
+	repo := sql.MakeAccounts(conn)
+
 	r := gin.Default()
 	r.GET("/", index.Handler)
 
@@ -22,13 +24,8 @@ func buildRouter(conn *gorm.DB) *gin.Engine {
 	api := r.Group("/api")
 	api.Use(auth.Middleware())
 
-	repo := sql.MakeAccounts(conn)
 	accounts := rest.MakeAccountView(repo)
-	api.POST("/accounts", accounts.CreateAccount)
-	api.GET("/accounts/:uuid", accounts.GetAccount)
-	api.PUT("/accounts/:uuid", accounts.UpdateAccount)
-	api.DELETE("/accounts/:uuid", accounts.DeleteAccount)
-	api.GET("/accounts", accounts.GetAccounts)
+	accounts.Router(api)
 
 	// rest.Routes(api)
 

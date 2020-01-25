@@ -4,9 +4,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/ericktm/olivsoft-golang-api/pkg/domain"
-
-	"github.com/ericktm/olivsoft-golang-api/common"
+	"github.com/erickoliv/finances-api/domain"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres" // for pg dialect
@@ -25,7 +23,7 @@ func Prepare() *gorm.DB {
 		log.Fatal(err)
 	}
 	db.LogMode(true)
-	// database migrations
+	// database migrations, pendind real migration startup
 	db.AutoMigrate(&domain.Tag{})
 	db.AutoMigrate(&domain.User{})
 	db.AutoMigrate(&domain.Category{})
@@ -48,7 +46,7 @@ func getEnvConfig(s string) string {
 // Middleware adds a gorm.DB connection pool reference inside gin.Context
 func Middleware(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.Set(common.DB, db)
+		c.Set(domain.DB, db)
 		c.Next()
 	}
 }

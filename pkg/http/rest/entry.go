@@ -4,10 +4,10 @@ package rest
 // 	"fmt"
 // 	"net/http"
 
-// 	"github.com/ericktm/olivsoft-golang-api/pkg/domain"
+// 	"github.com/erickoliv/finances-api/domain"
 // 	"github.com/google/uuid"
 
-// 	"github.com/ericktm/olivsoft-golang-api/common"
+// 	"github.com/erickoliv/finances-api/domain"
 // 	"github.com/gin-gonic/gin"
 // 	"github.com/jinzhu/gorm"
 // )
@@ -23,8 +23,8 @@ package rest
 
 // // GetEntries return all entries
 // func GetEntries(c *gin.Context) {
-// 	db := c.MustGet(common.DB).(*gorm.DB)
-// 	user := c.MustGet(common.LoggedUser).(uuid.UUID)
+// 	db := c.MustGet(domain.DB).(*gorm.DB)
+// 	user := c.MustGet(domain.LoggedUser).(uuid.UUID)
 
 // 	// println("current user", user)
 
@@ -50,19 +50,19 @@ package rest
 
 // // CreateEntry can be called to create a new instance of Entry on database, using props provided via http request
 // func CreateEntry(c *gin.Context) {
-// 	db := c.MustGet(common.DB).(*gorm.DB)
-// 	user := c.MustGet(common.LoggedUser).(uuid.UUID)
+// 	db := c.MustGet(domain.DB).(*gorm.DB)
+// 	user := c.MustGet(domain.LoggedUser).(uuid.UUID)
 
 // 	entry := domain.Entry{}
 
 // 	if err := c.Bind(&entry); err != nil {
-// 		c.AbortWithStatusJSON(http.StatusInternalServerError, common.ErrorMessage{Message: err.Error()})
+// 		c.AbortWithStatusJSON(http.StatusInternalServerError, domain.ErrorMessage{Message: err.Error()})
 // 		return
 // 	}
 // 	entry.Owner = user
 
 // 	if err := db.Save(&entry).Error; err != nil {
-// 		c.AbortWithStatusJSON(http.StatusInternalServerError, common.ErrorMessage{Message: err.Error()})
+// 		c.AbortWithStatusJSON(http.StatusInternalServerError, domain.ErrorMessage{Message: err.Error()})
 // 		return
 // 	}
 
@@ -71,8 +71,8 @@ package rest
 
 // // GetEntry can be called to get a specific entry from the database. The uuid used to query is part of the url
 // func GetEntry(c *gin.Context) {
-// 	db := c.MustGet(common.DB).(*gorm.DB)
-// 	user := c.MustGet(common.LoggedUser).(uuid.UUID)
+// 	db := c.MustGet(domain.DB).(*gorm.DB)
+// 	user := c.MustGet(domain.LoggedUser).(uuid.UUID)
 // 	entry := domain.Entry{}
 
 // 	uuid := c.Param("uuid")
@@ -80,7 +80,7 @@ package rest
 // 	db.Where("uuid = ? AND owner = ?", uuid, user).First(&entry)
 
 // 	if entry.IsNew() {
-// 		c.JSON(http.StatusNotFound, common.ErrorMessage{"entry not found"})
+// 		c.JSON(http.StatusNotFound, domain.ErrorMessage{"entry not found"})
 // 	} else {
 // 		c.JSON(http.StatusOK, &entry)
 // 	}
@@ -88,15 +88,15 @@ package rest
 
 // // UpdateEntry can be called to update a specific entry. The uuid used to query is part of the url
 // func UpdateEntry(c *gin.Context) {
-// 	db := c.MustGet(common.DB).(*gorm.DB)
-// 	user := c.MustGet(common.LoggedUser).(uuid.UUID)
+// 	db := c.MustGet(domain.DB).(*gorm.DB)
+// 	user := c.MustGet(domain.LoggedUser).(uuid.UUID)
 
 // 	current := domain.Entry{}
 // 	new := domain.Entry{}
 
 // 	// TODO: create validate function to be used for all entry related validations
 // 	if err := c.Bind(&new); err != nil {
-// 		c.AbortWithStatusJSON(http.StatusBadRequest, common.ErrorMessage{Message: err.Error()})
+// 		c.AbortWithStatusJSON(http.StatusBadRequest, domain.ErrorMessage{Message: err.Error()})
 // 		return
 // 	}
 
@@ -104,13 +104,13 @@ package rest
 // 	db.Where("uuid = ? AND owner = ?", uuid, user).First(&current)
 
 // 	if current.IsNew() {
-// 		c.JSON(http.StatusNotFound, common.ErrorMessage{"entry not found"})
+// 		c.JSON(http.StatusNotFound, domain.ErrorMessage{"entry not found"})
 // 	} else {
 // 		current.Name = new.Name
 // 		current.Description = new.Description
 
 // 		if err := db.Save(&current).Error; err != nil {
-// 			c.AbortWithStatusJSON(http.StatusInternalServerError, common.ErrorMessage{Message: err.Error()})
+// 			c.AbortWithStatusJSON(http.StatusInternalServerError, domain.ErrorMessage{Message: err.Error()})
 // 		} else {
 // 			c.JSON(http.StatusOK, &current)
 // 		}
@@ -119,8 +119,8 @@ package rest
 
 // // DeleteEntry can be used to logical delete a row entry from the database.
 // func DeleteEntry(c *gin.Context) {
-// 	db := c.MustGet(common.DB).(*gorm.DB)
-// 	user := c.MustGet(common.LoggedUser).(uuid.UUID)
+// 	db := c.MustGet(domain.DB).(*gorm.DB)
+// 	user := c.MustGet(domain.LoggedUser).(uuid.UUID)
 
 // 	uuid := c.Param("uuid")
 // 	entity := domain.Entry{}
@@ -131,6 +131,6 @@ package rest
 // 		c.Status(http.StatusNoContent)
 // 	} else {
 // 		msg := fmt.Sprintf("%s - ocurrencies: %d", uuid, affected)
-// 		c.JSON(http.StatusNotFound, common.ErrorMessage{msg})
+// 		c.JSON(http.StatusNotFound, domain.ErrorMessage{msg})
 // 	}
 // }

@@ -3,27 +3,45 @@ package rest
 import (
 	"net/http"
 
-	"github.com/ericktm/olivsoft-golang-api/pkg/domain"
-	"github.com/google/uuid"
-
-	"github.com/ericktm/olivsoft-golang-api/common"
+	"github.com/erickoliv/finances-api/domain"
 	"github.com/gin-gonic/gin"
-	"github.com/jinzhu/gorm"
+	"github.com/google/uuid"
 )
 
-type AccountView struct {
+type AccountView interface {
+	Router(*gin.RouterGroup)
+}
+
+type handler struct {
 	repo domain.AccountRepository
 }
 
 func MakeAccountView(repo domain.AccountRepository) AccountView {
-	return AccountView{
+	return handler{
 		repo: repo,
 	}
 }
 
+var (
+	accountNotFound = domain.ErrorMessage{Message: "account not found"}
+)
+
+func (view handler) Router(group *gin.RouterGroup) {
+	group.GET("/accounts", view.GetAccounts)
+	group.GET("/accounts/:uuid", view.GetAccount)
+	group.POST("/accounts", view.CreateAccount)
+	group.PUT("/accounts/:uuid", view.UpdateAccount)
+	group.DELETE("/accounts/:uuid", view.DeleteAccount)
+}
+
 // GetAccounts return all accounts
-func (view AccountView) GetAccounts(c *gin.Context) {
-	user := c.MustGet(common.LoggedUser).(uuid.UUID)
+func (view handler) GetAccounts(c *gin.Context) {
+	user, err := extractUser(c)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, domain.ErrorMessage{Message: err.Error()})
+		return
+	}
+
 	query := ExtractFilters(c.Request.URL.Query())
 	query.Filters["owner = ?"] = user
 
@@ -46,62 +64,81 @@ func (view AccountView) GetAccounts(c *gin.Context) {
 }
 
 // CreateAccount can be called to create a new instance of Account on database, using props provided via http request
-func (view AccountView) CreateAccount(c *gin.Context) {
-	user := c.MustGet(common.LoggedUser).(uuid.UUID)
-	account := domain.Account{}
-	c.Bind(&account)
-	account.Owner = user
+func (view handler) CreateAccount(c *gin.Context) {
+	user := c.MustGet(domain.LoggedUser).(uuid.UUID)
+	account := &domain.Account{}
 
-	if err := view.repo.Save(c, account); err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, common.ErrorMessage{Message: err.Error()})
+	if err := c.ShouldBind(account); err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, err)
 		return
 	}
 
-	c.JSON(http.StatusCreated, &account)
+	account.Owner = user
+	if err := view.repo.Save(c, account); err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, domain.ErrorMessage{Message: err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusCreated, account)
 }
 
 // GetAccount can be called to get a specific account from the database. The uuid used to query is part of the url
-func (view AccountView) GetAccount(c *gin.Context) {
-	db := c.MustGet(common.DB).(*gorm.DB)
-	user := c.MustGet(common.LoggedUser).(uuid.UUID)
-	account := domain.Account{}
+func (view handler) GetAccount(c *gin.Context) {
+	user, err := extractUser(c)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, domain.ErrorMessage{Message: err.Error()})
+		return
+	}
 
-	uuid := c.Param("uuid")
+	pk, err := extractUUID(c)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, domain.ErrorMessage{Message: err.Error()})
+		return
+	}
 
-	db.Where("uuid = ? AND owner = ?", uuid, user).First(&account)
+	account, err := view.repo.Get(c, pk, user)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, err)
+		return
+	}
 
 	if account.IsNew() {
-		c.JSON(http.StatusNotFound, common.ErrorMessage{"account not found"})
-	} else {
-		c.JSON(http.StatusOK, &account)
+		c.JSON(http.StatusNotFound, accountNotFound)
+		return
 	}
+
+	c.JSON(http.StatusOK, &account)
 }
 
 // UpdateAccount can be called to update a specific account. The uuid used to query is part of the url
-func (view AccountView) UpdateAccount(c *gin.Context) {
+func (view handler) UpdateAccount(c *gin.Context) {
 	new := domain.Account{}
 
 	// TODO: create validate function to be used for all account related validations
 	if err := c.Bind(&new); err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, common.ErrorMessage{Message: err.Error()})
+		c.AbortWithStatusJSON(http.StatusBadRequest, domain.ErrorMessage{Message: err.Error()})
 		return
 	}
-	// _ := c.MustGet(common.LoggedUser).(uuid.UUID)
-
-	pk, err := uuid.Parse(c.Param("uuid"))
+	user, err := extractUser(c)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, common.ErrorMessage{Message: err.Error()})
+		c.AbortWithStatusJSON(http.StatusInternalServerError, domain.ErrorMessage{Message: err.Error()})
 		return
 	}
 
-	current, err := view.repo.Get(c, pk)
+	pk, err := extractUUID(c)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, common.ErrorMessage{Message: err.Error()})
+		c.AbortWithStatusJSON(http.StatusInternalServerError, domain.ErrorMessage{Message: err.Error()})
+		return
+	}
+
+	current, err := view.repo.Get(c, pk, user)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, domain.ErrorMessage{Message: err.Error()})
 		return
 	}
 
 	if current.IsNew() {
-		c.JSON(http.StatusNotFound, common.ErrorMessage{"account not found"})
+		c.JSON(http.StatusNotFound, accountNotFound)
 		return
 	}
 
@@ -109,7 +146,7 @@ func (view AccountView) UpdateAccount(c *gin.Context) {
 	current.Description = new.Description
 
 	if err := view.repo.Save(c, current); err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, common.ErrorMessage{Message: err.Error()})
+		c.AbortWithStatusJSON(http.StatusInternalServerError, domain.ErrorMessage{Message: err.Error()})
 		return
 	}
 
@@ -117,14 +154,14 @@ func (view AccountView) UpdateAccount(c *gin.Context) {
 }
 
 // DeleteAccount can be used to logical delete a row account from the database.
-func (view AccountView) DeleteAccount(c *gin.Context) {
-	// user := c.MustGet(common.LoggedUser).(uuid.UUID)
+func (view handler) DeleteAccount(c *gin.Context) {
+	// user := c.MustGet(domain.LoggedUser).(uuid.UUID)
 
 	pk := uuid.MustParse(c.Param("uuid")) // fix this
 	// entity := domain.Account{}
 
 	if err := view.repo.Delete(c, pk); err != nil {
-		c.JSON(http.StatusNotFound, common.ErrorMessage{err.Error()})
+		c.AbortWithStatusJSON(http.StatusNotFound, domain.ErrorMessage{err.Error()})
 		return
 	}
 
