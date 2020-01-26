@@ -1,13 +1,14 @@
 package sql
 
 import (
-	"github.com/erickoliv/finances-api/domain"
-	"github.com/jinzhu/gorm"
 	"math"
+
+	"github.com/erickoliv/finances-api/pkg/http/rest"
+	"github.com/jinzhu/gorm"
 )
 
 // Build is the function where the Query attributes are translated into a gorm.DB instance. Can be used to generic filter, order and pagination
-func BuildQuery(base *gorm.DB, q domain.Query) *gorm.DB {
+func BuildQuery(base *gorm.DB, q rest.Query) *gorm.DB {
 	for k, v := range q.Filters {
 		base = base.Where(k, v)
 	}

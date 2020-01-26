@@ -2,6 +2,7 @@ package account
 
 import (
 	"github.com/erickoliv/finances-api/pkg/http/rest"
+	"github.com/erickoliv/finances-api/repository"
 	"net/http"
 
 	"github.com/erickoliv/finances-api/domain"
@@ -14,10 +15,10 @@ type AccountView interface {
 }
 
 type handler struct {
-	repo domain.AccountRepository
+	repo repository.AccountService
 }
 
-func MakeAccountView(repo domain.AccountRepository) AccountView {
+func MakeAccountView(repo repository.AccountService) AccountView {
 	return handler{
 		repo: repo,
 	}

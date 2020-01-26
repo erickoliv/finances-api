@@ -24,8 +24,8 @@ type PaginatedMessage struct {
 }
 
 // ExtractFilters can be used to parse query parameters and return a Query object, useful to query, filter and paginate requests
-func ExtractFilters(f url.Values) domain.Query {
-	q := domain.Query{
+func ExtractFilters(f url.Values) Query {
+	q := Query{
 		Page:  1,
 		Limit: 100,
 	}
