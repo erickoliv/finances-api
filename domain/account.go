@@ -1,7 +1,6 @@
 package domain
 
 import (
-	"context"
 	"github.com/google/uuid"
 )
 
@@ -16,11 +15,4 @@ type Account struct {
 // TableName returns Account table name
 func (Account) TableName() string {
 	return "public.accounts"
-}
-
-type AccountRepository interface {
-	Delete(context.Context, uuid.UUID) error
-	Filter(context.Context, Query) ([]Account, error)
-	Get(context.Context, uuid.UUID, uuid.UUID) (*Account, error)
-	Save(context.Context, *Account) error
 }

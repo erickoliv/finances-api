@@ -59,7 +59,7 @@ package rest
 // 	tag.Owner = user
 
 // 	if err := db.Save(&tag).Error; err != nil {
-// 		c.AbortWithStatusJSON(http.StatusInternalServerError, domain.ErrorMessage{Message: err.Error()})
+// 		c.AbortWithStatusJSON(http.StatusInternalServerError, rest.ErrorMessage{Message: err.Error()})
 // 	} else {
 // 		c.JSON(http.StatusCreated, &tag)
 // 	}
@@ -76,7 +76,7 @@ package rest
 // 	db.Where("uuid = ? AND owner = ?", uuid, user).First(&tag)
 
 // 	if tag.IsNew() {
-// 		c.JSON(http.StatusNotFound, domain.ErrorMessage{"tag not found"})
+// 		c.JSON(http.StatusNotFound, rest.ErrorMessage{"tag not found"})
 // 	} else {
 // 		c.JSON(http.StatusOK, &tag)
 // 	}
@@ -92,7 +92,7 @@ package rest
 
 // 	// TODO: create validate function to be used for all tag related validations
 // 	if err := c.Bind(&new); err != nil {
-// 		c.AbortWithStatusJSON(http.StatusBadRequest, domain.ErrorMessage{Message: err.Error()})
+// 		c.AbortWithStatusJSON(http.StatusBadRequest, rest.ErrorMessage{Message: err.Error()})
 // 		return
 // 	}
 
@@ -100,13 +100,13 @@ package rest
 // 	db.Where("uuid = ? AND owner = ?", uuid, user).First(&current)
 
 // 	if current.IsNew() {
-// 		c.JSON(http.StatusNotFound, domain.ErrorMessage{"tag not found"})
+// 		c.JSON(http.StatusNotFound, rest.ErrorMessage{"tag not found"})
 // 	} else {
 // 		current.Name = new.Name
 // 		current.Description = new.Description
 
 // 		if err := db.Save(&current).Error; err != nil {
-// 			c.AbortWithStatusJSON(http.StatusInternalServerError, domain.ErrorMessage{Message: err.Error()})
+// 			c.AbortWithStatusJSON(http.StatusInternalServerError, rest.ErrorMessage{Message: err.Error()})
 // 		} else {
 // 			c.JSON(http.StatusOK, &current)
 // 		}
@@ -127,6 +127,6 @@ package rest
 // 		c.Status(http.StatusNoContent)
 // 	} else {
 // 		msg := fmt.Sprintf("%s - ocurrencies: %d", uuid, affected)
-// 		c.JSON(http.StatusNotFound, domain.ErrorMessage{msg})
+// 		c.JSON(http.StatusNotFound, rest.ErrorMessage{msg})
 // 	}
 // }
