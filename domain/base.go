@@ -12,7 +12,7 @@ type BaseModel struct {
 	UUID      uuid.UUID  `gorm:"type:uuid;PRIMARY_KEY" json:"uuid"`
 	CreatedAt time.Time  `json:"createdAt"`
 	UpdatedAt time.Time  `json:"updatedAt"`
-	DeletedAt *time.Time `json:"deletedAt"`
+	DeletedAt *time.Time `json:"-"`
 }
 
 // BeforeCreate execute commands before creating a BaseModel
@@ -23,5 +23,5 @@ func (b BaseModel) BeforeCreate(scope *gorm.Scope) (err error) {
 
 // IsNew checks if the entity is a new record, without a proper uuid
 func (b BaseModel) IsNew() bool {
-	return b.UUID.String() == "00000000-0000-0000-0000-000000000000"
+	return b.UUID == uuid.Nil
 }

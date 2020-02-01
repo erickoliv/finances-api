@@ -8,6 +8,7 @@ import (
 	"github.com/erickoliv/finances-api/repository"
 	"github.com/google/uuid"
 	"github.com/jinzhu/gorm"
+	"github.com/pkg/errors"
 )
 
 type accountRepo struct {
@@ -21,25 +22,33 @@ func MakeAccounts(conn *gorm.DB) repository.AccountService {
 }
 
 func (repo accountRepo) Get(ctx context.Context, pk uuid.UUID, owner uuid.UUID) (*domain.Account, error) {
-	result := &domain.Account{}
+	account := &domain.Account{}
+	query := repo.conn.First(account, "uuid = ? AND owner = ?", pk, owner)
 
-	status := repo.conn.Where("uuid = ?", pk).Where("owner = ?", owner)
-	status.First(result)
-
-	return result, status.Error
+	return account, query.Error
 }
 
-func (repo accountRepo) Filter(ctx context.Context, query rest.Query) ([]domain.Account, error) {
-	result := []domain.Account{}
-	status := BuildQuery(repo.conn, query).Find(&result)
+func (repo accountRepo) Query(ctx context.Context, filters *rest.Query) ([]*domain.Account, error) {
+	query, err := BuildQuery(repo.conn, filters)
+	if err != nil {
+		return nil, errors.Wrap(err, "account repository query")
+	}
 
-	return result, status.Error
+	results := []*domain.Account{}
+	query = query.Find(&results)
+
+	return results, query.Error
 }
 
 func (repo accountRepo) Save(ctx context.Context, account *domain.Account) error {
+	if account == nil {
+		return errors.New("invalid account")
+	}
+
 	return repo.conn.Save(account).Error
 }
 
-func (repo accountRepo) Delete(ctx context.Context, id uuid.UUID) error {
-	return ctx.Err()
+func (repo accountRepo) Delete(ctx context.Context, id uuid.UUID, user uuid.UUID) error {
+	query := repo.conn.Where("uuid = ? AND owner = ?", id, user).Delete(&domain.Account{})
+	return query.Error
 }

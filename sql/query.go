@@ -1,21 +1,24 @@
 package sql
 
 import (
-	"math"
+	"errors"
 
 	"github.com/erickoliv/finances-api/pkg/http/rest"
 	"github.com/jinzhu/gorm"
 )
 
+var InvalidQuery = errors.New("invalid query")
+
 // Build is the function where the Query attributes are translated into a gorm.DB instance. Can be used to generic filter, order and pagination
-func BuildQuery(base *gorm.DB, q rest.Query) *gorm.DB {
+func BuildQuery(base *gorm.DB, q *rest.Query) (*gorm.DB, error) {
+	if q == nil {
+		return nil, InvalidQuery
+	}
 	for k, v := range q.Filters {
 		base = base.Where(k, v)
 	}
 
-	base.Count(&q.Total)
 	base = base.Offset(q.Limit * (q.Page - 1)).Limit(q.Limit).Order(q.Sort)
-	q.Pages = int(math.Ceil(float64(q.Total) / float64(q.Limit)))
 
-	return base
+	return base, nil
 }

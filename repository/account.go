@@ -9,8 +9,8 @@ import (
 )
 
 type AccountService interface {
-	Delete(context.Context, uuid.UUID) error
-	Filter(context.Context, rest.Query) ([]domain.Account, error)
-	Get(context.Context, uuid.UUID, uuid.UUID) (*domain.Account, error)
-	Save(context.Context, *domain.Account) error
+	Delete(ctx context.Context, pk uuid.UUID, owner uuid.UUID) error
+	Get(ctx context.Context, pk uuid.UUID, owner uuid.UUID) (*domain.Account, error)
+	Save(ctx context.Context, account *domain.Account) error
+	Query(ctx context.Context, filters *rest.Query) ([]*domain.Account, error)
 }

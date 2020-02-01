@@ -1,13 +1,13 @@
 package account
 
 import (
+	"net/http"
+
 	"github.com/erickoliv/finances-api/pkg/http/rest"
 	"github.com/erickoliv/finances-api/repository"
-	"net/http"
 
 	"github.com/erickoliv/finances-api/domain"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 )
 
 type AccountView interface {
@@ -34,27 +34,20 @@ func (view handler) Router(group *gin.RouterGroup) {
 
 // GetAccounts return all accounts
 func (view handler) GetAccounts(c *gin.Context) {
-	user, err := rest.ExtractUser(c)
+	query, err := rest.ExtractFilters(c, true)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, rest.ErrorMessage{Message: err.Error()})
-		return
+		c.AbortWithStatusJSON(http.StatusBadRequest, err.Error)
 	}
 
-	query := rest.ExtractFilters(c.Request.URL.Query())
-	query.Filters["owner = ?"] = user
-
-	result, err := view.repo.Filter(c, query)
+	result, err := view.repo.Query(c, query)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err)
 		return
 	}
 
 	response := rest.PaginatedMessage{
-		Total: query.Total,
 		Page:  query.Page,
-		Pages: query.Pages,
 		Data:  &result,
-		Limit: query.Limit,
 		Count: len(result),
 	}
 
@@ -63,15 +56,19 @@ func (view handler) GetAccounts(c *gin.Context) {
 
 // CreateAccount can be called to create a new instance of Account on database, using props provided via http request
 func (view handler) CreateAccount(c *gin.Context) {
-	user := c.MustGet(domain.LoggedUser).(uuid.UUID)
 	account := &domain.Account{}
-
 	if err := c.ShouldBind(account); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, err)
 		return
 	}
 
+	user, err := rest.ExtractUser(c)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, err.Error)
+	}
+
 	account.Owner = user
+
 	if err := view.repo.Save(c, account); err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, rest.ErrorMessage{Message: err.Error()})
 		return
@@ -94,29 +91,24 @@ func (view handler) GetAccount(c *gin.Context) {
 		return
 	}
 
-	account, err := view.repo.Get(c, pk, user)
-	if err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, err)
-		return
-	}
+	row, err := view.repo.Get(c, pk, user)
 
-	if account.IsNew() {
+	if row != nil && row.IsNew() {
 		c.JSON(http.StatusNotFound, accountNotFound)
 		return
 	}
 
-	c.JSON(http.StatusOK, &account)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	c.JSON(http.StatusOK, row)
 }
 
 // UpdateAccount can be called to update a specific account. The uuid used to query is part of the url
 func (view handler) UpdateAccount(c *gin.Context) {
-	new := domain.Account{}
 
-	// TODO: create validate function to be used for all account related validations
-	if err := c.Bind(&new); err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, rest.ErrorMessage{Message: err.Error()})
-		return
-	}
 	user, err := rest.ExtractUser(c)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, rest.ErrorMessage{Message: err.Error()})
@@ -129,36 +121,43 @@ func (view handler) UpdateAccount(c *gin.Context) {
 		return
 	}
 
-	current, err := view.repo.Get(c, pk, user)
+	row, err := view.repo.Get(c, pk, user)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, rest.ErrorMessage{Message: err.Error()})
 		return
 	}
 
-	if current.IsNew() {
-		c.JSON(http.StatusNotFound, accountNotFound)
+	// TODO: create validate function to be used for all account related validations
+	if err := c.Bind(row); err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, rest.ErrorMessage{Message: err.Error()})
 		return
 	}
 
-	current.Name = new.Name
-	current.Description = new.Description
+	row.UUID = pk
+	row.Owner = user
 
-	if err := view.repo.Save(c, current); err != nil {
+	if err := view.repo.Save(c, row); err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, rest.ErrorMessage{Message: err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, &current)
+	c.JSON(http.StatusOK, row)
 }
 
 // DeleteAccount can be used to logical delete a row account from the database.
 func (view handler) DeleteAccount(c *gin.Context) {
-	// user := c.MustGet(domain.LoggedUser).(uuid.UUID)
+	user, err := rest.ExtractUser(c)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, rest.ErrorMessage{err.Error()})
+		return
+	}
+	pk, err := rest.ExtractUUID(c)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, rest.ErrorMessage{err.Error()})
+		return
+	}
 
-	pk := uuid.MustParse(c.Param("uuid")) // fix this
-	// entity := domain.Account{}
-
-	if err := view.repo.Delete(c, pk); err != nil {
+	if err := view.repo.Delete(c, pk, user); err != nil {
 		c.AbortWithStatusJSON(http.StatusNotFound, rest.ErrorMessage{err.Error()})
 		return
 	}
