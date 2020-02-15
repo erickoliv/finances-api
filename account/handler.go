@@ -36,12 +36,17 @@ func (view handler) Router(group *gin.RouterGroup) {
 func (view handler) GetAccounts(c *gin.Context) {
 	query, err := rest.ExtractFilters(c, true)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, err.Error)
+		c.AbortWithStatusJSON(http.StatusBadRequest, rest.ErrorMessage{
+			Message: err.Error(),
+		})
+		return
 	}
 
 	result, err := view.repo.Query(c, query)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, err)
+		c.JSON(http.StatusInternalServerError, rest.ErrorMessage{
+			Message: err.Error(),
+		})
 		return
 	}
 

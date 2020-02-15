@@ -14,13 +14,13 @@ type AccountService struct {
 	mock.Mock
 }
 
-// Delete provides a mock function with given fields: _a0, _a1, _a2
-func (_m *AccountService) Delete(_a0 context.Context, _a1 uuid.UUID, _a2 uuid.UUID) error {
-	ret := _m.Called(_a0, _a1, _a2)
+// Delete provides a mock function with given fields: ctx, pk, owner
+func (_m *AccountService) Delete(ctx context.Context, pk uuid.UUID, owner uuid.UUID) error {
+	ret := _m.Called(ctx, pk, owner)
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, uuid.UUID) error); ok {
-		r0 = rf(_a0, _a1, _a2)
+		r0 = rf(ctx, pk, owner)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -28,13 +28,13 @@ func (_m *AccountService) Delete(_a0 context.Context, _a1 uuid.UUID, _a2 uuid.UU
 	return r0
 }
 
-// Get provides a mock function with given fields: _a0, _a1, _a2
-func (_m *AccountService) Get(_a0 context.Context, _a1 uuid.UUID, _a2 uuid.UUID) (*domain.Account, error) {
-	ret := _m.Called(_a0, _a1, _a2)
+// Get provides a mock function with given fields: ctx, pk, owner
+func (_m *AccountService) Get(ctx context.Context, pk uuid.UUID, owner uuid.UUID) (*domain.Account, error) {
+	ret := _m.Called(ctx, pk, owner)
 
 	var r0 *domain.Account
 	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, uuid.UUID) *domain.Account); ok {
-		r0 = rf(_a0, _a1, _a2)
+		r0 = rf(ctx, pk, owner)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*domain.Account)
@@ -43,7 +43,7 @@ func (_m *AccountService) Get(_a0 context.Context, _a1 uuid.UUID, _a2 uuid.UUID)
 
 	var r1 error
 	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID, uuid.UUID) error); ok {
-		r1 = rf(_a0, _a1, _a2)
+		r1 = rf(ctx, pk, owner)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -51,36 +51,22 @@ func (_m *AccountService) Get(_a0 context.Context, _a1 uuid.UUID, _a2 uuid.UUID)
 	return r0, r1
 }
 
-// Insert provides a mock function with given fields: _a0, _a1
-func (_m *AccountService) Insert(_a0 context.Context, _a1 *domain.Account) error {
-	ret := _m.Called(_a0, _a1)
+// Query provides a mock function with given fields: ctx, filters
+func (_m *AccountService) Query(ctx context.Context, filters *rest.Query) ([]*domain.Account, error) {
+	ret := _m.Called(ctx, filters)
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *domain.Account) error); ok {
-		r0 = rf(_a0, _a1)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// Query provides a mock function with given fields: _a0, _a1
-func (_m *AccountService) Query(_a0 context.Context, _a1 *rest.Query) ([]domain.Account, error) {
-	ret := _m.Called(_a0, _a1)
-
-	var r0 []domain.Account
-	if rf, ok := ret.Get(0).(func(context.Context, *rest.Query) []domain.Account); ok {
-		r0 = rf(_a0, _a1)
+	var r0 []*domain.Account
+	if rf, ok := ret.Get(0).(func(context.Context, *rest.Query) []*domain.Account); ok {
+		r0 = rf(ctx, filters)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]domain.Account)
+			r0 = ret.Get(0).([]*domain.Account)
 		}
 	}
 
 	var r1 error
 	if rf, ok := ret.Get(1).(func(context.Context, *rest.Query) error); ok {
-		r1 = rf(_a0, _a1)
+		r1 = rf(ctx, filters)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -88,13 +74,13 @@ func (_m *AccountService) Query(_a0 context.Context, _a1 *rest.Query) ([]domain.
 	return r0, r1
 }
 
-// Update provides a mock function with given fields: _a0, _a1, _a2, _a3
-func (_m *AccountService) Update(_a0 context.Context, _a1 uuid.UUID, _a2 uuid.UUID, _a3 *domain.Account) error {
-	ret := _m.Called(_a0, _a1, _a2, _a3)
+// Save provides a mock function with given fields: ctx, account
+func (_m *AccountService) Save(ctx context.Context, account *domain.Account) error {
+	ret := _m.Called(ctx, account)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, uuid.UUID, *domain.Account) error); ok {
-		r0 = rf(_a0, _a1, _a2, _a3)
+	if rf, ok := ret.Get(0).(func(context.Context, *domain.Account) error); ok {
+		r0 = rf(ctx, account)
 	} else {
 		r0 = ret.Error(0)
 	}
