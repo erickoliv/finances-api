@@ -1,6 +1,7 @@
 package account
 
 import (
+	"bytes"
 	"errors"
 	"io/ioutil"
 	"net/http"
@@ -155,25 +156,96 @@ func Test_handler_GetAccounts(t *testing.T) {
 }
 
 func Test_handler_CreateAccount(t *testing.T) {
-	type fields struct {
-		repo repository.AccountService
-	}
-	type args struct {
-		c *gin.Context
-	}
+	randomUser, _ := uuid.NewRandom()
 	tests := []struct {
-		name   string
-		fields fields
-		args   args
+		name         string
+		setupRepo    func() repository.AccountService
+		setupContext func(c *gin.Context)
+		payload      string
+		status       int
+		response     string
 	}{
-		// TODO: Add test cases.
+		{
+			name: "return a error with invalid payload",
+			setupRepo: func() repository.AccountService {
+				return &mocks.AccountService{}
+			},
+			setupContext: func(c *gin.Context) {
+				c.Next()
+			},
+			payload:  "{}",
+			status:   http.StatusBadRequest,
+			response: `{"message":"Key: 'Account.Name' Error:Field validation for 'Name' failed on the 'required' tag"}`,
+		},
+		{
+			name: "return a error with invalid context, without user uuid",
+			setupRepo: func() repository.AccountService {
+				return &mocks.AccountService{}
+			},
+			setupContext: func(c *gin.Context) {
+				c.Next()
+			},
+			payload:  entities.ValidAccountPayload,
+			status:   http.StatusBadRequest,
+			response: `{"message":"user not present in context"}`,
+		},
+		{
+			name: "error to save a valid account",
+			setupRepo: func() repository.AccountService {
+				repo := &mocks.AccountService{}
+				repo.On("Save", mock.Anything, mock.Anything).Return(errors.New("error to save"))
+				return repo
+			},
+			setupContext: func(c *gin.Context) {
+				c.Set(domain.LoggedUser, randomUser)
+				c.Next()
+			},
+			payload:  entities.ValidAccountPayload,
+			status:   http.StatusInternalServerError,
+			response: `{"message":"error to save"}`,
+		},
+		{
+			name: "success to save a valid account",
+			setupRepo: func() repository.AccountService {
+				repo := &mocks.AccountService{}
+				repo.On("Save", mock.Anything, mock.Anything).Return(nil)
+				return repo
+			},
+			setupContext: func(c *gin.Context) {
+				c.Set(domain.LoggedUser, randomUser)
+				c.Next()
+			},
+			payload:  entities.ValidAccountPayload,
+			status:   http.StatusCreated,
+			response: ``,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			view := handler{
-				repo: tt.fields.repo,
+			router := gin.New()
+			if tt.setupContext != nil {
+				router.Use(tt.setupContext)
 			}
-			view.CreateAccount(tt.args.c)
+
+			view := handler{
+				repo: tt.setupRepo(),
+			}
+
+			group := router.Group("")
+			view.Router(group)
+
+			payload := []byte(tt.payload)
+			req, _ := http.NewRequest("POST", "/accounts", bytes.NewReader(payload))
+			req.Header.Add("Content-Type", "application/json")
+			resp := httptest.NewRecorder()
+
+			router.ServeHTTP(resp, req)
+			assert.Equal(t, tt.status, resp.Result().StatusCode)
+
+			body, err := ioutil.ReadAll(resp.Result().Body)
+			assert.NoError(t, err)
+			assert.Contains(t, string(body), tt.response)
+
 		})
 	}
 }
