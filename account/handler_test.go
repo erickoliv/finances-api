@@ -1,29 +1,43 @@
 package account
 
 import (
-	"reflect"
+	"bytes"
+	"errors"
+	"io/ioutil"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
+	"github.com/erickoliv/finances-api/domain"
+	"github.com/erickoliv/finances-api/pkg/http/rest"
 	"github.com/erickoliv/finances-api/repository"
+	"github.com/erickoliv/finances-api/test/entities"
+	"github.com/erickoliv/finances-api/test/mocks"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestMakeAccountView(t *testing.T) {
-	type args struct {
-		repo repository.AccountService
-	}
+	mocked := &mocks.AccountService{}
 	tests := []struct {
 		name string
-		args args
+		repo repository.AccountService
 		want AccountView
 	}{
-		// TODO: Add test cases.
+		{
+			name: "create account view",
+			repo: mocked,
+			want: handler{
+				repo: mocked,
+			},
+		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := MakeAccountView(tt.args.repo); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("MakeAccountView() = %v, want %v", got, tt.want)
-			}
+			assert.Equal(t, tt.want, MakeAccountView(tt.repo))
 		})
 	}
 }
@@ -53,49 +67,185 @@ func Test_handler_Router(t *testing.T) {
 }
 
 func Test_handler_GetAccounts(t *testing.T) {
-	type fields struct {
-		repo repository.AccountService
-	}
-	type args struct {
-		c *gin.Context
-	}
+	randomUser, _ := uuid.NewRandom()
+
 	tests := []struct {
-		name   string
-		fields fields
-		args   args
+		name         string
+		setupRepo    func() repository.AccountService
+		setupContext func(c *gin.Context)
+		status       int
+		response     string
 	}{
-		// TODO: Add test cases.
+		{
+			name: "Should return a default paginated response",
+			setupContext: func(c *gin.Context) {
+				c.Set(domain.LoggedUser, randomUser)
+				c.Next()
+			},
+			setupRepo: func() repository.AccountService {
+				repo := &mocks.AccountService{}
+				repo.On("Query", mock.Anything, &rest.Query{
+					Page:  1,
+					Limit: 100,
+					Filters: map[string]interface{}{
+						"owner = ?": randomUser,
+					},
+				}).Return(entities.ValidAcccounts(), nil)
+				return repo
+			},
+			status:   http.StatusOK,
+			response: `"page":1,"count":3`,
+		},
+		{
+			name: "Should return a error to query",
+			setupContext: func(c *gin.Context) {
+				c.Set(domain.LoggedUser, randomUser)
+				c.Next()
+			},
+			setupRepo: func() repository.AccountService {
+				repo := &mocks.AccountService{}
+				repo.On("Query", mock.Anything, &rest.Query{
+					Page:  1,
+					Limit: 100,
+					Filters: map[string]interface{}{
+						"owner = ?": randomUser,
+					},
+				}).Return(nil, errors.New("error to query"))
+				return repo
+			},
+			status:   http.StatusInternalServerError,
+			response: `{"message":"error to query"}`,
+		},
+		{
+			name: "Should fail if receives a context without user",
+			setupRepo: func() repository.AccountService {
+				return &mocks.AccountService{}
+			},
+			status:   http.StatusBadRequest,
+			response: `{"message":"user not present in context"}`,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			view := handler{
-				repo: tt.fields.repo,
+			// gin.SetMode(gin.TestMode)
+
+			router := gin.Default()
+
+			if tt.setupContext != nil {
+				router.Use(tt.setupContext)
 			}
-			view.GetAccounts(tt.args.c)
+
+			view := handler{
+				repo: tt.setupRepo(),
+			}
+
+			group := router.Group("")
+			view.Router(group)
+
+			req, _ := http.NewRequest("GET", "/accounts", nil)
+			resp := httptest.NewRecorder()
+
+			router.ServeHTTP(resp, req)
+			assert.Equal(t, tt.status, resp.Result().StatusCode)
+
+			body, err := ioutil.ReadAll(resp.Result().Body)
+			assert.NoError(t, err)
+			assert.Contains(t, string(body), tt.response)
 		})
 	}
 }
 
 func Test_handler_CreateAccount(t *testing.T) {
-	type fields struct {
-		repo repository.AccountService
-	}
-	type args struct {
-		c *gin.Context
-	}
+	randomUser, _ := uuid.NewRandom()
 	tests := []struct {
-		name   string
-		fields fields
-		args   args
+		name         string
+		setupRepo    func() repository.AccountService
+		setupContext func(c *gin.Context)
+		payload      string
+		status       int
+		response     string
 	}{
-		// TODO: Add test cases.
+		{
+			name: "return a error with invalid payload",
+			setupRepo: func() repository.AccountService {
+				return &mocks.AccountService{}
+			},
+			setupContext: func(c *gin.Context) {
+				c.Next()
+			},
+			payload:  "{}",
+			status:   http.StatusBadRequest,
+			response: `{"message":"Key: 'Account.Name' Error:Field validation for 'Name' failed on the 'required' tag"}`,
+		},
+		{
+			name: "return a error with invalid context, without user uuid",
+			setupRepo: func() repository.AccountService {
+				return &mocks.AccountService{}
+			},
+			setupContext: func(c *gin.Context) {
+				c.Next()
+			},
+			payload:  entities.ValidAccountPayload,
+			status:   http.StatusBadRequest,
+			response: `{"message":"user not present in context"}`,
+		},
+		{
+			name: "error to save a valid account",
+			setupRepo: func() repository.AccountService {
+				repo := &mocks.AccountService{}
+				repo.On("Save", mock.Anything, mock.Anything).Return(errors.New("error to save"))
+				return repo
+			},
+			setupContext: func(c *gin.Context) {
+				c.Set(domain.LoggedUser, randomUser)
+				c.Next()
+			},
+			payload:  entities.ValidAccountPayload,
+			status:   http.StatusInternalServerError,
+			response: `{"message":"error to save"}`,
+		},
+		{
+			name: "success to save a valid account",
+			setupRepo: func() repository.AccountService {
+				repo := &mocks.AccountService{}
+				repo.On("Save", mock.Anything, mock.Anything).Return(nil)
+				return repo
+			},
+			setupContext: func(c *gin.Context) {
+				c.Set(domain.LoggedUser, randomUser)
+				c.Next()
+			},
+			payload:  entities.ValidAccountPayload,
+			status:   http.StatusCreated,
+			response: ``,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			view := handler{
-				repo: tt.fields.repo,
+			router := gin.New()
+			if tt.setupContext != nil {
+				router.Use(tt.setupContext)
 			}
-			view.CreateAccount(tt.args.c)
+
+			view := handler{
+				repo: tt.setupRepo(),
+			}
+
+			group := router.Group("")
+			view.Router(group)
+
+			payload := []byte(tt.payload)
+			req, _ := http.NewRequest("POST", "/accounts", bytes.NewReader(payload))
+			req.Header.Add("Content-Type", "application/json")
+			resp := httptest.NewRecorder()
+
+			router.ServeHTTP(resp, req)
+			assert.Equal(t, tt.status, resp.Result().StatusCode)
+
+			body, err := ioutil.ReadAll(resp.Result().Body)
+			assert.NoError(t, err)
+			assert.Contains(t, string(body), tt.response)
+
 		})
 	}
 }

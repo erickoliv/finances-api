@@ -36,12 +36,17 @@ func (view handler) Router(group *gin.RouterGroup) {
 func (view handler) GetAccounts(c *gin.Context) {
 	query, err := rest.ExtractFilters(c, true)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, err.Error)
+		c.AbortWithStatusJSON(http.StatusBadRequest, rest.ErrorMessage{
+			Message: err.Error(),
+		})
+		return
 	}
 
 	result, err := view.repo.Query(c, query)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, err)
+		c.JSON(http.StatusInternalServerError, rest.ErrorMessage{
+			Message: err.Error(),
+		})
 		return
 	}
 
@@ -58,19 +63,24 @@ func (view handler) GetAccounts(c *gin.Context) {
 func (view handler) CreateAccount(c *gin.Context) {
 	account := &domain.Account{}
 	if err := c.ShouldBind(account); err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, err)
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"message": err.Error(),
+		})
 		return
 	}
 
 	user, err := rest.ExtractUser(c)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, err.Error)
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"message": err.Error(),
+		})
+		return
 	}
 
 	account.Owner = user
 
 	if err := view.repo.Save(c, account); err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, rest.ErrorMessage{Message: err.Error()})
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 		return
 	}
 
@@ -148,17 +158,17 @@ func (view handler) UpdateAccount(c *gin.Context) {
 func (view handler) DeleteAccount(c *gin.Context) {
 	user, err := rest.ExtractUser(c)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, rest.ErrorMessage{err.Error()})
+		c.AbortWithStatusJSON(http.StatusBadRequest, rest.ErrorMessage{Message: err.Error()})
 		return
 	}
 	pk, err := rest.ExtractUUID(c)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, rest.ErrorMessage{err.Error()})
+		c.AbortWithStatusJSON(http.StatusBadRequest, rest.ErrorMessage{Message: err.Error()})
 		return
 	}
 
 	if err := view.repo.Delete(c, pk, user); err != nil {
-		c.AbortWithStatusJSON(http.StatusNotFound, rest.ErrorMessage{err.Error()})
+		c.AbortWithStatusJSON(http.StatusNotFound, rest.ErrorMessage{Message: err.Error()})
 		return
 	}
 
