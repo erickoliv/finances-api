@@ -2,7 +2,6 @@ package auth
 
 import (
 	"fmt"
-	"github.com/erickoliv/finances-api/pkg/http/rest"
 	"net/http"
 	"os"
 	"time"
@@ -21,8 +20,8 @@ func Login(c *gin.Context) {
 	user := domain.User{}
 
 	if err := c.Bind(&credentials); err != nil {
-		c.AbortWithStatusJSON(http.StatusUnauthorized, rest.ErrorMessage{
-			Message: "invalid payload",
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+			"message": "invalid payload",
 		})
 		return
 	}
@@ -30,16 +29,16 @@ func Login(c *gin.Context) {
 
 	result := db.First(&user, "username = ? AND password = ?", credentials.Username, credentials.Password)
 	if result.RecordNotFound() {
-		c.AbortWithStatusJSON(http.StatusUnauthorized, rest.ErrorMessage{
-			Message: "login denied. Check username or password",
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+			"message": "login denied. Check username or password",
 		})
 		return
 	}
 
 	if result.Error != nil {
 		fmt.Printf("%v - \n", result.Error.Error())
-		c.AbortWithStatusJSON(http.StatusInternalServerError, rest.ErrorMessage{
-			Message: "authentication error. Check logs or contact system admin",
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"message": "authentication error. Check logs or contact system admin",
 		})
 		return
 	}
@@ -58,8 +57,8 @@ func Login(c *gin.Context) {
 	key := []byte(os.Getenv(domain.AppToken))
 	if str, err := token.SignedString(key); err != nil {
 		// If there is an error in creating the JWT return an internal server error
-		c.AbortWithStatusJSON(http.StatusUnauthorized, rest.ErrorMessage{
-			Message: err.Error(),
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+			"message": err.Error(),
 		})
 	} else {
 		expiration := int(ttl.Sub(time.Now()).Seconds())

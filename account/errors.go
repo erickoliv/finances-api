@@ -1,7 +1,5 @@
 package account
 
-import "github.com/erickoliv/finances-api/pkg/http/rest"
+import "errors"
 
-var (
-	accountNotFound = rest.ErrorMessage{Message: "account not found"}
-)
+var accountNotFound = errors.New("account not found")

@@ -6,7 +6,6 @@ import (
 	"os"
 
 	"github.com/erickoliv/finances-api/domain"
-	"github.com/erickoliv/finances-api/pkg/http/rest"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
 )
@@ -19,8 +18,8 @@ func Register(c *gin.Context) {
 
 	if err := c.Bind(&user); err != nil {
 		msg := fmt.Sprintf("invalid payload: %v", err)
-		c.AbortWithStatusJSON(http.StatusInternalServerError, rest.ErrorMessage{
-			Message: msg,
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"message": msg,
 		})
 		return
 	}
@@ -33,8 +32,8 @@ func Register(c *gin.Context) {
 
 	user.Password = credentials.Password
 	if err := db.Save(&user).Error; err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, rest.ErrorMessage{
-			Message: "registration error",
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"message": "registration error",
 		})
 		return
 	}
