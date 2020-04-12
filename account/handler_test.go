@@ -25,7 +25,7 @@ func TestMakeAccountView(t *testing.T) {
 	tests := []struct {
 		name string
 		repo repository.AccountService
-		want AccountView
+		want HTTPHandler
 	}{
 		{
 			name: "create account view",
@@ -38,7 +38,7 @@ func TestMakeAccountView(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, MakeAccountView(tt.repo))
+			assert.Equal(t, tt.want, NewHTTPHandler(tt.repo))
 		})
 	}
 }
@@ -316,7 +316,7 @@ func Test_handler_GetAccount(t *testing.T) {
 				router.Use(tt.setupContext)
 			}
 
-			view := MakeAccountView(tt.setupRepo())
+			view := NewHTTPHandler(tt.setupRepo())
 
 			group := router.Group("")
 			view.Router(group)

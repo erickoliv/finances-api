@@ -10,7 +10,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type AccountView interface {
+// HTTPHandler is a interface to expose account manipulation using HTTP
+type HTTPHandler interface {
 	Router(*gin.RouterGroup)
 }
 
@@ -18,7 +19,8 @@ type handler struct {
 	repo repository.AccountService
 }
 
-func MakeAccountView(repo repository.AccountService) AccountView {
+// NewHTTPHandler receives a AccountService, returning a internal account HTTP handler
+func NewHTTPHandler(repo repository.AccountService) HTTPHandler {
 	return handler{
 		repo: repo,
 	}

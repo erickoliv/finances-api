@@ -24,7 +24,7 @@ func buildRouter(conn *gorm.DB) *gin.Engine {
 	api := r.Group("/api")
 	api.Use(auth.Middleware())
 
-	accounts := account.MakeAccountView(repo)
+	accounts := account.NewHTTPHandler(repo)
 	accounts.Router(api)
 
 	// rest.Routes(api)
