@@ -38,7 +38,7 @@ func (view handler) Router(group *gin.RouterGroup) {
 func (view handler) GetAccounts(c *gin.Context) {
 	query, err := rest.ExtractFilters(c, true)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 			"message": err.Error(),
 		})
 		return
@@ -73,7 +73,7 @@ func (view handler) CreateAccount(c *gin.Context) {
 
 	user, err := rest.ExtractUser(c)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 			"message": err.Error(),
 		})
 		return
@@ -93,7 +93,7 @@ func (view handler) CreateAccount(c *gin.Context) {
 func (view handler) GetAccount(c *gin.Context) {
 	user, err := rest.ExtractUser(c)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"message": err.Error()})
 		return
 	}
 
@@ -127,7 +127,7 @@ func (view handler) UpdateAccount(c *gin.Context) {
 
 	user, err := rest.ExtractUser(c)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"message": err.Error()})
 		return
 	}
 
@@ -163,7 +163,7 @@ func (view handler) UpdateAccount(c *gin.Context) {
 func (view handler) DeleteAccount(c *gin.Context) {
 	user, err := rest.ExtractUser(c)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"message": err.Error()})
 		return
 	}
 	pk, err := rest.ExtractUUID(c)
@@ -173,7 +173,7 @@ func (view handler) DeleteAccount(c *gin.Context) {
 	}
 
 	if err := view.repo.Delete(c, pk, user); err != nil {
-		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"message": err.Error()})
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 		return
 	}
 

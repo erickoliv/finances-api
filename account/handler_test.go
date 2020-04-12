@@ -98,7 +98,7 @@ func Test_handler_GetAccounts(t *testing.T) {
 			setupRepo: func() repository.AccountService {
 				return &mocks.AccountService{}
 			},
-			status:   http.StatusBadRequest,
+			status:   http.StatusUnauthorized,
 			response: `{"message":"user not present in context"}`,
 		},
 	}
@@ -163,7 +163,7 @@ func Test_handler_CreateAccount(t *testing.T) {
 				c.Next()
 			},
 			payload:  entities.ValidAccountPayload,
-			status:   http.StatusBadRequest,
+			status:   http.StatusUnauthorized,
 			response: `{"message":"user not present in context"}`,
 		},
 		{
@@ -246,7 +246,7 @@ func Test_handler_GetAccount(t *testing.T) {
 				return &mocks.AccountService{}
 			},
 			entity:   validEntity.String(),
-			status:   http.StatusInternalServerError,
+			status:   http.StatusUnauthorized,
 			response: `{"message":"user not present in context"}`,
 		},
 		{
@@ -374,7 +374,7 @@ func Test_handler_UpdateAccount(t *testing.T) {
 			},
 			entity:   validAccount.UUID.String(),
 			payload:  serializeAccount(validAccount),
-			status:   http.StatusInternalServerError,
+			status:   http.StatusUnauthorized,
 			response: `{"message":"user not present in context"}`,
 		},
 		{
@@ -502,25 +502,89 @@ func Test_handler_UpdateAccount(t *testing.T) {
 }
 
 func Test_handler_DeleteAccount(t *testing.T) {
-	type fields struct {
-		repo repository.AccountService
-	}
-	type args struct {
-		c *gin.Context
-	}
+	loggedUser := uuid.New()
+	validAccount := entities.ValidCompleteAccount()
+
 	tests := []struct {
-		name   string
-		fields fields
-		args   args
+		name         string
+		setupRepo    func() repository.AccountService
+		setupContext func(c *gin.Context)
+		pk           string
+		status       int
+		response     string
 	}{
-		// TODO: Add test cases.
+		{
+			name: "successfully delete a account",
+			setupRepo: func() repository.AccountService {
+				repo := &mocks.AccountService{}
+				repo.On("Delete", mock.Anything, validAccount.UUID, loggedUser).Return(nil)
+				return repo
+			},
+			pk:     validAccount.UUID.String(),
+			status: http.StatusNoContent,
+		},
+		{
+			name: "error to get user from context",
+			setupRepo: func() repository.AccountService {
+				repo := &mocks.AccountService{}
+				return repo
+			},
+			setupContext: func(c *gin.Context) {
+
+			},
+			pk:       validAccount.UUID.String(),
+			status:   http.StatusUnauthorized,
+			response: `{"message":"user not present in context"}`,
+		},
+		{
+			name: "error due to invalid uuid url param",
+			setupRepo: func() repository.AccountService {
+				repo := &mocks.AccountService{}
+				return repo
+			},
+			pk:       "invalid param",
+			status:   http.StatusBadRequest,
+			response: `{"message":"uuid parameter is invalid"}`,
+		},
+		{
+			name: "error to delete a account",
+			setupRepo: func() repository.AccountService {
+				repo := &mocks.AccountService{}
+				repo.On("Delete", mock.Anything, validAccount.UUID, loggedUser).Return(errors.New("error to delete account"))
+				return repo
+			},
+			pk:     validAccount.UUID.String(),
+			status: http.StatusInternalServerError,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			view := handler{
-				repo: tt.fields.repo,
+
+			router := gin.New()
+
+			if tt.setupContext == nil {
+				tt.setupContext = func(c *gin.Context) {
+					c.Set(domain.LoggedUser, loggedUser)
+					c.Next()
+				}
 			}
-			view.DeleteAccount(tt.args.c)
+
+			router.Use(tt.setupContext)
+			view := NewHTTPHandler(tt.setupRepo())
+
+			group := router.Group("")
+			view.Router(group)
+
+			req, _ := http.NewRequest("DELETE", "/accounts/"+tt.pk, nil)
+			resp := httptest.NewRecorder()
+
+			router.ServeHTTP(resp, req)
+			assert.Equal(t, tt.status, resp.Result().StatusCode)
+
+			body, err := ioutil.ReadAll(resp.Result().Body)
+			assert.NoError(t, err)
+			assert.Contains(t, string(body), tt.response)
+
 		})
 	}
 }
