@@ -17,8 +17,8 @@ push:
 	docker build . -t ${IMAGE_NAME}:${IMAGE_VERSION}
 	docker push ${IMAGE_NAME}:${IMAGE_VERSION}
 
-test:
-	go test -cover -race -coverprofile=coverage.out -covermode=atomic ./...
+tests:
+	go test -count=1 -cover -race -coverprofile=coverage.out -covermode=atomic ./...
 
 full-test:
 	rm -f finances-api

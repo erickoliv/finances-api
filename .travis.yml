@@ -13,7 +13,7 @@ git:
   depth: 1
 
 script:
-  - make test  
+  - make tests
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
