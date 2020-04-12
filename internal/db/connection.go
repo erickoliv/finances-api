@@ -1,6 +1,7 @@
 package db
 
 import (
+	"fmt"
 	"log"
 	"os"
 
@@ -10,14 +11,18 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/postgres" // for pg dialect
 )
 
-// Prepare is the function designed
-// to prepare and return all shared/singleton application props
+// Prepare database connection
 func Prepare() *gorm.DB {
-	dbURL := getEnvConfig("DB_URL")
+
+	host := getEnvConfig("DB_HOST")
+	user := getEnvConfig("DB_USER")
+	password := getEnvConfig("DB_PASSWORD")
+	port := getEnvConfig("DB_PORT")
+	database := getEnvConfig("DB_NAME")
+
+	dbURL := fmt.Sprintf("host=%s user=%s port=%s dbname=%s password=%s sslmode=disable", host, user, port, database, password)
+
 	_ = getEnvConfig("APP_TOKEN")
-
-	log.Println("url", dbURL)
-
 	db, err := gorm.Open("postgres", dbURL)
 	if err != nil {
 		log.Fatal(err)
