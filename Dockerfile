@@ -1,10 +1,10 @@
-FROM golang:1.12 as builder
+FROM golang:1.13 as builder
 WORKDIR /
 COPY . ./
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix .
 
 FROM alpine:latest
 WORKDIR /app/
-COPY --from=builder /finances-api /app/olivsoft-api
+COPY --from=builder /finances-api /app/run
 EXPOSE 80
-ENTRYPOINT ./olivsoft-api
+ENTRYPOINT ./run
