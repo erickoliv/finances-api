@@ -102,14 +102,13 @@ func (view handler) GetAccount(c *gin.Context) {
 	}
 
 	row, err := view.repo.Get(c, pk, user)
-
-	if row != nil && row.IsNew() {
-		c.JSON(http.StatusNotFound, accountNotFound)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 		return
 	}
 
-	if err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, err.Error())
+	if row.IsNew() {
+		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"message": "account not found"})
 		return
 	}
 

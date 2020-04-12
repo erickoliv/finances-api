@@ -2,6 +2,7 @@ package account
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"io/ioutil"
 	"net/http"
@@ -38,30 +39,6 @@ func TestMakeAccountView(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			assert.Equal(t, tt.want, MakeAccountView(tt.repo))
-		})
-	}
-}
-
-func Test_handler_Router(t *testing.T) {
-	type fields struct {
-		repo repository.AccountService
-	}
-	type args struct {
-		group *gin.RouterGroup
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		args   args
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			view := handler{
-				repo: tt.fields.repo,
-			}
-			view.Router(tt.args.group)
 		})
 	}
 }
@@ -251,25 +228,109 @@ func Test_handler_CreateAccount(t *testing.T) {
 }
 
 func Test_handler_GetAccount(t *testing.T) {
-	type fields struct {
-		repo repository.AccountService
-	}
-	type args struct {
-		c *gin.Context
-	}
+
+	loggedUser := uuid.New()
+	validEntity := uuid.New()
+
 	tests := []struct {
-		name   string
-		fields fields
-		args   args
+		name         string
+		setupRepo    func() repository.AccountService
+		setupContext func(c *gin.Context)
+		entity       string
+		status       int
+		response     string
 	}{
-		// TODO: Add test cases.
+		{
+			name: "error to get account if there is no user uuid in context",
+			setupRepo: func() repository.AccountService {
+				return &mocks.AccountService{}
+			},
+			entity:   validEntity.String(),
+			status:   http.StatusInternalServerError,
+			response: `{"message":"user not present in context"}`,
+		},
+		{
+			name: "invalid uuid in url",
+			setupRepo: func() repository.AccountService {
+				return &mocks.AccountService{}
+			},
+			setupContext: func(c *gin.Context) {
+				c.Set(domain.LoggedUser, loggedUser)
+				c.Next()
+			},
+			entity:   "invalid-uuid",
+			status:   http.StatusInternalServerError,
+			response: `{"message":"uuid parameter is invalid"}`,
+		},
+		{
+			name: "error to get account from repository",
+			setupRepo: func() repository.AccountService {
+				repo := &mocks.AccountService{}
+				repo.On("Get", mock.Anything, validEntity, loggedUser).Return(nil, errors.New("error to get data"))
+				return repo
+			},
+			setupContext: func(c *gin.Context) {
+				c.Set(domain.LoggedUser, loggedUser)
+				c.Next()
+			},
+			entity:   validEntity.String(),
+			status:   http.StatusInternalServerError,
+			response: `{"message":"error to get data"}`,
+		},
+		{
+			name: "empty account from repository",
+			setupRepo: func() repository.AccountService {
+				repo := &mocks.AccountService{}
+				repo.On("Get", mock.Anything, validEntity, loggedUser).Return(&domain.Account{}, nil)
+				return repo
+			},
+			setupContext: func(c *gin.Context) {
+				c.Set(domain.LoggedUser, loggedUser)
+				c.Next()
+			},
+			entity:   validEntity.String(),
+			status:   http.StatusNotFound,
+			response: `{"message":"account not found"}`,
+		},
+		{
+			name: "success - valid account from repository",
+			setupRepo: func() repository.AccountService {
+				repo := &mocks.AccountService{}
+				repo.On("Get", mock.Anything, validEntity, loggedUser).Return(entities.ValidCompleteAccount(), nil)
+				return repo
+			},
+			setupContext: func(c *gin.Context) {
+				c.Set(domain.LoggedUser, loggedUser)
+				c.Next()
+			},
+			entity:   validEntity.String(),
+			status:   http.StatusOK,
+			response: serializeAccount(entities.ValidCompleteAccount()),
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			view := handler{
-				repo: tt.fields.repo,
+
+			router := gin.New()
+			if tt.setupContext != nil {
+				router.Use(tt.setupContext)
 			}
-			view.GetAccount(tt.args.c)
+
+			view := MakeAccountView(tt.setupRepo())
+
+			group := router.Group("")
+			view.Router(group)
+
+			req, _ := http.NewRequest("GET", "/accounts/"+tt.entity, nil)
+
+			resp := httptest.NewRecorder()
+
+			router.ServeHTTP(resp, req)
+			assert.Equal(t, tt.status, resp.Result().StatusCode)
+
+			body, err := ioutil.ReadAll(resp.Result().Body)
+			assert.NoError(t, err)
+			assert.Contains(t, string(body), tt.response)
 		})
 	}
 }
@@ -320,4 +381,12 @@ func Test_handler_DeleteAccount(t *testing.T) {
 			view.DeleteAccount(tt.args.c)
 		})
 	}
+}
+
+func serializeAccount(entity *domain.Account) string {
+	raw, err := json.Marshal(entity)
+	if err != nil {
+		panic("error to marshall")
+	}
+	return string(raw)
 }

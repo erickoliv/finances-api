@@ -25,6 +25,10 @@ func (repo accountRepo) Get(ctx context.Context, pk uuid.UUID, owner uuid.UUID) 
 	account := &domain.Account{}
 	query := repo.conn.First(account, "uuid = ? AND owner = ?", pk, owner)
 
+	if query.Error == nil && account.IsNew() {
+		return nil, nil
+	}
+
 	return account, query.Error
 }
 
