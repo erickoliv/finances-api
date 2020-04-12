@@ -119,6 +119,11 @@ func (view handler) GetAccount(c *gin.Context) {
 
 // UpdateAccount can be called to update a specific account. The uuid used to query is part of the url
 func (view handler) UpdateAccount(c *gin.Context) {
+	newAccount := domain.Account{}
+	if err := c.Bind(&newAccount); err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		return
+	}
 
 	user, err := rest.ExtractUser(c)
 	if err != nil {
@@ -132,27 +137,26 @@ func (view handler) UpdateAccount(c *gin.Context) {
 		return
 	}
 
-	row, err := view.repo.Get(c, pk, user)
+	current, err := view.repo.Get(c, pk, user)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 		return
 	}
 
-	// TODO: create validate function to be used for all account related validations
-	if err := c.Bind(row); err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+	if current == nil {
+		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"message": "account not found"})
 		return
 	}
 
-	row.UUID = pk
-	row.Owner = user
+	newAccount.UUID = pk
+	newAccount.Owner = user
 
-	if err := view.repo.Save(c, row); err != nil {
+	if err := view.repo.Save(c, &newAccount); err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, row)
+	c.JSON(http.StatusOK, current)
 }
 
 // DeleteAccount can be used to logical delete a row account from the database.

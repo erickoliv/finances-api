@@ -336,25 +336,167 @@ func Test_handler_GetAccount(t *testing.T) {
 }
 
 func Test_handler_UpdateAccount(t *testing.T) {
-	type fields struct {
-		repo repository.AccountService
-	}
-	type args struct {
-		c *gin.Context
-	}
+	validAccount := entities.ValidAccountWithoutDescription()
+
 	tests := []struct {
-		name   string
-		fields fields
-		args   args
+		name         string
+		setupRepo    func() repository.AccountService
+		setupContext func(c *gin.Context)
+		entity       string
+		payload      string
+		status       int
+		response     string
 	}{
-		// TODO: Add test cases.
+		{
+			name: "error due to invalid payload",
+			setupRepo: func() repository.AccountService {
+				repo := mocks.AccountService{}
+
+				repo.On("Get",
+					mock.Anything, entities.ValidAccountWithoutName().UUID, entities.ValidAccountWithoutName().Owner,
+				).Return(validAccount, nil)
+
+				return &repo
+			},
+			setupContext: func(c *gin.Context) {
+				c.Set(domain.LoggedUser, validAccount.Owner)
+				c.Next()
+			},
+			entity:   entities.ValidAccountWithoutName().UUID.String(),
+			payload:  serializeAccount(entities.ValidAccountWithoutName()),
+			status:   http.StatusBadRequest,
+			response: `{"message":"Key: 'Account.Name' Error:Field validation for 'Name' failed on the 'required' tag"}`,
+		},
+		{
+			name: "invalid user in context",
+			setupRepo: func() repository.AccountService {
+				return &mocks.AccountService{}
+			},
+			entity:   validAccount.UUID.String(),
+			payload:  serializeAccount(validAccount),
+			status:   http.StatusInternalServerError,
+			response: `{"message":"user not present in context"}`,
+		},
+		{
+			name: "invalid uuid in url parameter",
+			setupRepo: func() repository.AccountService {
+				return &mocks.AccountService{}
+			},
+			setupContext: func(c *gin.Context) {
+				c.Set(domain.LoggedUser, validAccount.Owner)
+				c.Next()
+			},
+			entity:   "invalid param",
+			payload:  serializeAccount(validAccount),
+			status:   http.StatusInternalServerError,
+			response: `{"message":"uuid parameter is invalid"}`,
+		},
+		{
+			name: "returns error to update a account",
+			setupRepo: func() repository.AccountService {
+				repo := mocks.AccountService{}
+				repo.On("Get",
+					mock.Anything, validAccount.UUID, validAccount.Owner,
+				).Return(validAccount, nil)
+				repo.On("Save", mock.Anything, validAccount).Return(errors.New("error to save"))
+
+				return &repo
+			},
+			setupContext: func(c *gin.Context) {
+				c.Set(domain.LoggedUser, validAccount.Owner)
+				c.Next()
+			},
+			entity:   validAccount.UUID.String(),
+			payload:  serializeAccount(validAccount),
+			status:   http.StatusInternalServerError,
+			response: `{"message":"error to save"}`,
+		},
+		{
+			name: "error to get current account",
+			setupRepo: func() repository.AccountService {
+				repo := mocks.AccountService{}
+
+				repo.On("Get",
+					mock.Anything, entities.ValidAccountWithoutName().UUID, entities.ValidAccountWithoutName().Owner,
+				).Return(nil, errors.New("error to get current account"))
+
+				return &repo
+			},
+			setupContext: func(c *gin.Context) {
+				c.Set(domain.LoggedUser, validAccount.Owner)
+				c.Next()
+			},
+			entity:   validAccount.UUID.String(),
+			payload:  serializeAccount(validAccount),
+			status:   http.StatusInternalServerError,
+			response: `{"message":"error to get current account"}`,
+		},
+		{
+			name: "error due to current account not found",
+			setupRepo: func() repository.AccountService {
+				repo := mocks.AccountService{}
+
+				repo.On("Get",
+					mock.Anything, entities.ValidAccountWithoutName().UUID, entities.ValidAccountWithoutName().Owner,
+				).Return(nil, nil)
+
+				return &repo
+			},
+			setupContext: func(c *gin.Context) {
+				c.Set(domain.LoggedUser, validAccount.Owner)
+				c.Next()
+			},
+			entity:   validAccount.UUID.String(),
+			payload:  serializeAccount(validAccount),
+			status:   http.StatusNotFound,
+			response: `{"message":"account not found"}`,
+		},
+		{
+			name: "success to update a account",
+			setupRepo: func() repository.AccountService {
+				repo := mocks.AccountService{}
+
+				repo.On("Get",
+					mock.Anything, validAccount.UUID, validAccount.Owner,
+				).Return(validAccount, nil)
+				repo.On("Save", mock.Anything, validAccount).Return(nil)
+
+				return &repo
+			},
+			setupContext: func(c *gin.Context) {
+				c.Set(domain.LoggedUser, validAccount.Owner)
+				c.Next()
+			},
+			entity:   validAccount.UUID.String(),
+			payload:  serializeAccount(validAccount),
+			status:   http.StatusOK,
+			response: serializeAccount(validAccount),
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			view := handler{
-				repo: tt.fields.repo,
+			router := gin.New()
+			if tt.setupContext != nil {
+				router.Use(tt.setupContext)
 			}
-			view.UpdateAccount(tt.args.c)
+
+			view := NewHTTPHandler(tt.setupRepo())
+
+			group := router.Group("")
+			view.Router(group)
+
+			payload := bytes.NewBufferString(tt.payload)
+			req, _ := http.NewRequest("PUT", "/accounts/"+tt.entity, payload)
+			req.Header.Add("Content-Type", "application/json")
+
+			resp := httptest.NewRecorder()
+
+			router.ServeHTTP(resp, req)
+			assert.Equal(t, tt.status, resp.Result().StatusCode)
+
+			body, err := ioutil.ReadAll(resp.Result().Body)
+			assert.NoError(t, err)
+			assert.Contains(t, string(body), tt.response)
 		})
 	}
 }
