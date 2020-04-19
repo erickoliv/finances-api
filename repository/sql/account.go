@@ -5,7 +5,7 @@ import (
 
 	"github.com/erickoliv/finances-api/domain"
 	"github.com/erickoliv/finances-api/pkg/http/rest"
-	"github.com/erickoliv/finances-api/repository"
+	"github.com/erickoliv/finances-api/service"
 	"github.com/google/uuid"
 	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"
@@ -15,7 +15,7 @@ type accountRepo struct {
 	conn *gorm.DB
 }
 
-func MakeAccounts(conn *gorm.DB) repository.AccountService {
+func MakeAccounts(conn *gorm.DB) service.Account {
 	return accountRepo{
 		conn,
 	}

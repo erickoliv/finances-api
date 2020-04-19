@@ -5,7 +5,7 @@ import (
 	"github.com/erickoliv/finances-api/auth"
 	"github.com/erickoliv/finances-api/index"
 	"github.com/erickoliv/finances-api/internal/db"
-	"github.com/erickoliv/finances-api/sql"
+	"github.com/erickoliv/finances-api/repository/sql"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
 )

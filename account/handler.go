@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/erickoliv/finances-api/pkg/http/rest"
-	"github.com/erickoliv/finances-api/repository"
+	"github.com/erickoliv/finances-api/service"
 
 	"github.com/erickoliv/finances-api/domain"
 	"github.com/gin-gonic/gin"
@@ -16,11 +16,11 @@ type HTTPHandler interface {
 }
 
 type handler struct {
-	repo repository.AccountService
+	repo service.Account
 }
 
-// NewHTTPHandler receives a AccountService, returning a internal account HTTP handler
-func NewHTTPHandler(repo repository.AccountService) HTTPHandler {
+// NewHTTPHandler receives a Account Service, returning a internal a HTTP account handler
+func NewHTTPHandler(repo service.Account) HTTPHandler {
 	return handler{
 		repo: repo,
 	}

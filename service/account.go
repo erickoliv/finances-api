@@ -1,4 +1,4 @@
-package repository
+package service
 
 import (
 	"context"
@@ -8,7 +8,8 @@ import (
 	"github.com/google/uuid"
 )
 
-type AccountService interface {
+// Account interface defines methods to manipute user's accounts
+type Account interface {
 	Delete(ctx context.Context, pk uuid.UUID, owner uuid.UUID) error
 	Get(ctx context.Context, pk uuid.UUID, owner uuid.UUID) (*domain.Account, error)
 	Save(ctx context.Context, account *domain.Account) error
