@@ -28,9 +28,8 @@ func Register(c *gin.Context) {
 		Username: user.Username,
 		Password: user.Password,
 	}
-	credentials.Encrypt(salt)
 
-	user.Password = credentials.Password
+	user.Password = encrypt(credentials.Password, salt)
 	if err := db.Save(&user).Error; err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"message": "registration error",

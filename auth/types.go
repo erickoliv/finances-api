@@ -14,14 +14,13 @@ type Credentials struct {
 	Password string `json:"password" binding:"required" `
 }
 
-// Encrypt password using sha256
-func (c *Credentials) Encrypt(salt string) {
-	hash := sha256.Sum256([]byte(c.Password + salt))
-	c.Password = fmt.Sprintf("%x", hash)
-}
-
 // Jwt struct to generate and validate jtw tokens
 type Jwt struct {
 	User uuid.UUID `json:"user"`
 	jwt.StandardClaims
+}
+
+func encrypt(pass string, salt string) string {
+	hash := sha256.Sum256([]byte(pass + salt))
+	return fmt.Sprintf("%x", hash)
 }

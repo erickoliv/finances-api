@@ -25,9 +25,9 @@ func Login(c *gin.Context) {
 		})
 		return
 	}
-	credentials.Encrypt(salt)
 
-	result := db.First(&user, "username = ? AND password = ?", credentials.Username, credentials.Password)
+	password := encrypt(credentials.Password, salt)
+	result := db.First(&user, "username = ? AND password = ?", credentials.Username, password)
 	if result.RecordNotFound() {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 			"message": "login denied. Check username or password",
