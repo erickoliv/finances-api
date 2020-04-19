@@ -22,7 +22,6 @@ func Prepare() *gorm.DB {
 
 	dbURL := fmt.Sprintf("host=%s user=%s port=%s dbname=%s password=%s sslmode=disable", host, user, port, database, password)
 
-	_ = getEnvConfig("APP_TOKEN")
 	db, err := gorm.Open("postgres", dbURL)
 	if err != nil {
 		log.Fatal(err)
