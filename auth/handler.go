@@ -18,6 +18,11 @@ type httpHandler struct {
 	sign service.Signer
 }
 
+type credential struct {
+	Username string `json:"username" binding:"required" `
+	Password string `json:"password" binding:"required" `
+}
+
 // NewHTTPHandler receives a Account Service, returning a internal a HTTP account handler
 func NewHTTPHandler(authenticator service.Authenticator, signer service.Signer) HTTPHandler {
 	return &httpHandler{
@@ -33,7 +38,7 @@ func (handler *httpHandler) Router(group *gin.RouterGroup) {
 
 func (handler *httpHandler) login(c *gin.Context) {
 
-	credentials := Credentials{}
+	credentials := credential{}
 	if err := c.Bind(&credentials); err != nil {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 			"message": "invalid payload",

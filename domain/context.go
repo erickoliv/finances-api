@@ -7,6 +7,6 @@ const (
 	AppToken string = "APP_TOKEN"
 	// AuthCookie is cookie name used in autentication api
 	AuthCookie string = "olivsoftauth"
-	// LoggedUser contais the UUID for the current user. It's set in AuthMidleware
+	// LoggedUser contains the UUID for the current user. It's set in AuthMidleware
 	LoggedUser string = "current-logged-user"
 )
