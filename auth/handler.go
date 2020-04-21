@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/erickoliv/finances-api/domain"
@@ -79,6 +80,8 @@ func (handler *httpHandler) register(c *gin.Context) {
 	}
 
 	if err := handler.auth.Register(c, user); err != nil {
+		fmt.Printf("error to register user %v - %v \n", user, err)
+
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"message": "registration error",
 		})

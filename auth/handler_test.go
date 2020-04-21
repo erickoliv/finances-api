@@ -159,32 +159,88 @@ func Test_httpHandler_login(t *testing.T) {
 }
 
 func Test_httpHandler_register(t *testing.T) {
-	type fields struct {
-		auth service.Authenticator
-		sign service.Signer
-	}
-	type args struct {
-		c *gin.Context
-	}
+
 	tests := []struct {
-		name   string
-		fields fields
-		args   args
+		name         string
+		setupHandler func() HTTPHandler
+		setupContext func(c *gin.Context)
+		body         string
+		status       int
+		response     string
 	}{
-		// TODO: Add test cases.
+		{
+			name: "successfully register a new user",
+			setupHandler: func() HTTPHandler {
+				authenticator := &mocks.Authenticator{}
+				signer := &mocks.Signer{}
+
+				authenticator.On("Register", mock.Anything, entities.ValidUser()).Return(nil)
+
+				return NewHTTPHandler(authenticator, signer)
+			},
+			body:     serialize(entities.ValidUser()),
+			status:   http.StatusCreated,
+			response: "",
+		},
+		{
+			name: "error to register a new user due to invalid payload",
+			setupHandler: func() HTTPHandler {
+				authenticator := &mocks.Authenticator{}
+				signer := &mocks.Signer{}
+				return NewHTTPHandler(authenticator, signer)
+			},
+			body:     "{}",
+			status:   http.StatusBadRequest,
+			response: `{"message":"Key: 'User.FirstName' Error:Field validation for 'FirstName' failed on the 'required' tag\nKey: 'User.Email' Error:Field validation for 'Email' failed on the 'required' tag\nKey: 'User.Username' Error:Field validation for 'Username' failed on the 'required' tag"}`,
+		},
+		{
+			name: "error to register a new user due to error from register service",
+			setupHandler: func() HTTPHandler {
+				authenticator := &mocks.Authenticator{}
+				signer := &mocks.Signer{}
+
+				authenticator.On("Register", mock.Anything, entities.ValidUser()).Return(errors.New("error to register user"))
+
+				return NewHTTPHandler(authenticator, signer)
+			},
+			body:     serialize(entities.ValidUser()),
+			status:   http.StatusInternalServerError,
+			response: `{"message":"registration error"}`,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			handler := &httpHandler{
-				auth: tt.fields.auth,
-				sign: tt.fields.sign,
+
+			router := gin.New()
+
+			if tt.setupContext != nil {
+				router.Use(tt.setupContext)
 			}
-			handler.register(tt.args.c)
+
+			if tt.setupHandler == nil {
+				t.Error("setup handler is nil")
+			}
+
+			view := tt.setupHandler()
+
+			group := router.Group("")
+			view.Router(group)
+
+			req, _ := http.NewRequest("POST", "/register", strings.NewReader(tt.body))
+			req.Header.Add("Content-Type", "application/json")
+			resp := httptest.NewRecorder()
+
+			router.ServeHTTP(resp, req)
+			assert.Equal(t, tt.status, resp.Result().StatusCode)
+
+			body, err := ioutil.ReadAll(resp.Result().Body)
+			assert.NoError(t, err)
+			assert.Contains(t, string(body), tt.response)
 		})
 	}
 }
 
-func serialize(entity *credential) string {
+func serialize(entity interface{}) string {
 	raw, err := json.Marshal(entity)
 	if err != nil {
 		panic("error to marshall")
