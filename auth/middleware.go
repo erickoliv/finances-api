@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// Middleware to validate authentication cookie
+// Middleware to validate JWT authentication cookie
 func Middleware(signer service.Signer) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		cookie, err := c.Cookie(domain.AuthCookie)
