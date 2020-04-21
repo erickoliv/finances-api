@@ -39,8 +39,8 @@ func (handler *httpHandler) Router(group *gin.RouterGroup) {
 func (handler *httpHandler) login(c *gin.Context) {
 
 	credentials := credential{}
-	if err := c.Bind(&credentials); err != nil {
-		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+	if err := c.ShouldBindJSON(&credentials); err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 			"message": "invalid payload",
 		})
 		return
@@ -48,7 +48,7 @@ func (handler *httpHandler) login(c *gin.Context) {
 
 	user, err := handler.auth.Login(c, credentials.Username, credentials.Password)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 			"message": err.Error(),
 		})
 		return
@@ -59,6 +59,7 @@ func (handler *httpHandler) login(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 			"message": err.Error(),
 		})
+		return
 	}
 
 	c.SetCookie(domain.AuthCookie, cookie, 0, "/", "", false, true)
