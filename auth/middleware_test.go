@@ -77,7 +77,7 @@ func TestMiddleware(t *testing.T) {
 				c.JSON(http.StatusOK, user.String())
 			})
 
-			req, _ := http.NewRequest("GET", "", nil)
+			req, _ := http.NewRequest("GET", "/", nil)
 			req.AddCookie(&tt.cookie)
 			// req.Header.Add("Content-Type", "application/json")
 			resp := httptest.NewRecorder()
