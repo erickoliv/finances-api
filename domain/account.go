@@ -9,7 +9,7 @@ type Account struct {
 	BaseModel
 	Name        string    `json:"name" binding:"required"`
 	Description string    `json:"description"  `
-	Owner       uuid.UUID `gorm:"INDEX,not null" json:"owner" `
+	Owner       uuid.UUID `gorm:"INDEX,not null" json:"-" `
 }
 
 // TableName returns Account table name

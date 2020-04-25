@@ -12,15 +12,12 @@ import (
 	"github.com/erickoliv/finances-api/repository/session"
 	"github.com/erickoliv/finances-api/repository/sql"
 	"github.com/erickoliv/finances-api/service"
+	"github.com/erickoliv/finances-api/tag"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
 )
 
 func buildRouter(conn *gorm.DB) *gin.Engine {
-
-	accountRepo := sql.MakeAccounts(conn)
-	authenticator := sql.MakeAuthenticator(conn)
-	signer := makeJWTSigner()
 
 	r := gin.Default()
 	r.GET("/", index.Handler)
@@ -28,16 +25,21 @@ func buildRouter(conn *gorm.DB) *gin.Engine {
 	r.Use(db.Middleware(conn))
 
 	security := r.Group("/auth")
+	authenticator := sql.MakeAuthenticator(conn)
+	signer := makeJWTSigner()
 	authHandler := auth.NewHTTPHandler(authenticator, signer)
 	authHandler.Router(security)
 
 	api := r.Group("/api")
 	api.Use(auth.Middleware(signer))
 
+	accountRepo := sql.MakeAccounts(conn)
 	accounts := account.NewHTTPHandler(accountRepo)
 	accounts.Router(api)
 
-	// rest.Routes(api)
+	tagRepo := sql.BuildTagRepository(conn)
+	tags := tag.NewHTTPHandler(tagRepo)
+	tags.Router(api)
 
 	return r
 }

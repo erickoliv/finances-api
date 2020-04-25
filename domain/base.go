@@ -9,10 +9,10 @@ import (
 
 // BaseModel is the base struct for tables
 type BaseModel struct {
-	UUID      uuid.UUID  `gorm:"type:uuid;PRIMARY_KEY" json:"uuid"`
-	CreatedAt time.Time  `json:"createdAt"`
-	UpdatedAt time.Time  `json:"updatedAt"`
-	DeletedAt *time.Time `json:"-"`
+	UUID      uuid.UUID  `gorm:"type:uuid;PRIMARY_KEY" json:"uuid" binding:"-"`
+	CreatedAt time.Time  `json:"createdAt" binding:"-"`
+	UpdatedAt time.Time  `json:"updatedAt" binding:"-"`
+	DeletedAt *time.Time `json:"-" binding:"-"`
 }
 
 // BeforeCreate execute commands before creating a BaseModel
