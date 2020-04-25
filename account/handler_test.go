@@ -143,18 +143,6 @@ func Test_handler_CreateAccount(t *testing.T) {
 		response     string
 	}{
 		{
-			name: "return a error with invalid payload",
-			setupRepo: func() service.Account {
-				return &mocks.Account{}
-			},
-			setupContext: func(c *gin.Context) {
-				c.Next()
-			},
-			payload:  "{}",
-			status:   http.StatusBadRequest,
-			response: `{"message":"Key: 'Account.Name' Error:Field validation for 'Name' failed on the 'required' tag"}`,
-		},
-		{
 			name: "return a error with invalid context, without user uuid",
 			setupRepo: func() service.Account {
 				return &mocks.Account{}
@@ -165,6 +153,19 @@ func Test_handler_CreateAccount(t *testing.T) {
 			payload:  entities.ValidAccountPayload,
 			status:   http.StatusUnauthorized,
 			response: `{"message":"user not present in context"}`,
+		},
+		{
+			name: "return a error with invalid payload",
+			setupRepo: func() service.Account {
+				return &mocks.Account{}
+			},
+			setupContext: func(c *gin.Context) {
+				c.Set(domain.LoggedUser, randomUser)
+				c.Next()
+			},
+			payload:  "{}",
+			status:   http.StatusBadRequest,
+			response: `{"message":"Key: 'Account.Name' Error:Field validation for 'Name' failed on the 'required' tag"}`,
 		},
 		{
 			name: "error to save a valid account",
@@ -192,9 +193,8 @@ func Test_handler_CreateAccount(t *testing.T) {
 				c.Set(domain.LoggedUser, randomUser)
 				c.Next()
 			},
-			payload:  entities.ValidAccountPayload,
-			status:   http.StatusCreated,
-			response: ``,
+			payload: entities.ValidAccountPayload,
+			status:  http.StatusCreated,
 		},
 	}
 	for _, tt := range tests {

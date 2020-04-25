@@ -63,14 +63,6 @@ func (view handler) GetAccounts(c *gin.Context) {
 
 // CreateAccount can be called to create a new instance of Account on database, using props provided via http request
 func (view handler) CreateAccount(c *gin.Context) {
-	account := &domain.Account{}
-	if err := c.ShouldBind(account); err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-			"message": err.Error(),
-		})
-		return
-	}
-
 	user, err := rest.ExtractUser(c)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
@@ -79,7 +71,15 @@ func (view handler) CreateAccount(c *gin.Context) {
 		return
 	}
 
-	account.Owner = user
+	account := &domain.Account{
+		Owner: user,
+	}
+	if err := c.ShouldBind(account); err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"message": err.Error(),
+		})
+		return
+	}
 
 	if err := view.repo.Save(c, account); err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
