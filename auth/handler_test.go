@@ -9,38 +9,37 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/erickoliv/finances-api/service"
+	"github.com/erickoliv/finances-api/auth/mocks"
 	"github.com/erickoliv/finances-api/test/entities"
-	"github.com/erickoliv/finances-api/test/mocks"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
-func createTestHandler() HTTPHandler {
+func createTestHandler() *HTTPHandler {
 	authenticator := &mocks.Authenticator{}
-	signer := &mocks.Signer{}
+	signer := &mocks.SessionSigner{}
 
 	return NewHTTPHandler(authenticator, signer)
 }
 
 func TestNewHTTPHandler(t *testing.T) {
 	authenticator := &mocks.Authenticator{}
-	signer := &mocks.Signer{}
+	signer := &mocks.SessionSigner{}
 
 	tests := []struct {
 		name          string
-		authenticator service.Authenticator
-		signer        service.Signer
-		want          HTTPHandler
+		authenticator Authenticator
+		signer        SessionSigner
+		want          *HTTPHandler
 	}{
 		{
 			name:          "creates a new http handler",
 			authenticator: authenticator,
 			signer:        signer,
-			want: &httpHandler{
-				auth: authenticator,
-				sign: signer,
+			want: &HTTPHandler{
+				auth:   authenticator,
+				signer: signer,
 			},
 		},
 	}
@@ -65,7 +64,7 @@ func Test_httpHandler_login(t *testing.T) {
 
 	tests := []struct {
 		name         string
-		setupHandler func() HTTPHandler
+		setupHandler func() *HTTPHandler
 		setupContext func(c *gin.Context)
 		body         string
 		status       int
@@ -73,12 +72,12 @@ func Test_httpHandler_login(t *testing.T) {
 	}{
 		{
 			name: "successfully login a valid user",
-			setupHandler: func() HTTPHandler {
+			setupHandler: func() *HTTPHandler {
 				authenticator := &mocks.Authenticator{}
-				signer := &mocks.Signer{}
+				signer := &mocks.SessionSigner{}
 
 				authenticator.On("Login", mock.Anything, validCredential.Username, validCredential.Password).Return(entities.ValidUser(), nil)
-				signer.On("SignUser", mock.Anything, entities.ValidUser()).Return("token", nil)
+				signer.On("SignUser", entities.ValidUser().UUID.String()).Return("token", nil)
 
 				return NewHTTPHandler(authenticator, signer)
 			},
@@ -88,9 +87,9 @@ func Test_httpHandler_login(t *testing.T) {
 		},
 		{
 			name: "error to login due to invalid payload data",
-			setupHandler: func() HTTPHandler {
+			setupHandler: func() *HTTPHandler {
 				authenticator := &mocks.Authenticator{}
-				signer := &mocks.Signer{}
+				signer := &mocks.SessionSigner{}
 				return NewHTTPHandler(authenticator, signer)
 			},
 			body:     "{}",
@@ -99,9 +98,9 @@ func Test_httpHandler_login(t *testing.T) {
 		},
 		{
 			name: "error to login due to invalid credentials",
-			setupHandler: func() HTTPHandler {
+			setupHandler: func() *HTTPHandler {
 				authenticator := &mocks.Authenticator{}
-				signer := &mocks.Signer{}
+				signer := &mocks.SessionSigner{}
 
 				authenticator.On("Login", mock.Anything, validCredential.Username, validCredential.Password).Return(nil, errors.New("invalid credentials"))
 				return NewHTTPHandler(authenticator, signer)
@@ -112,12 +111,12 @@ func Test_httpHandler_login(t *testing.T) {
 		},
 		{
 			name: "error to sign token ",
-			setupHandler: func() HTTPHandler {
+			setupHandler: func() *HTTPHandler {
 				authenticator := &mocks.Authenticator{}
-				signer := &mocks.Signer{}
+				signer := &mocks.SessionSigner{}
 
 				authenticator.On("Login", mock.Anything, validCredential.Username, validCredential.Password).Return(entities.ValidUser(), nil)
-				signer.On("SignUser", mock.Anything, entities.ValidUser()).Return("", errors.New("error to generate token"))
+				signer.On("SignUser", entities.ValidUser().UUID.String()).Return("", errors.New("error to generate token"))
 
 				return NewHTTPHandler(authenticator, signer)
 			},
@@ -162,7 +161,7 @@ func Test_httpHandler_register(t *testing.T) {
 
 	tests := []struct {
 		name         string
-		setupHandler func() HTTPHandler
+		setupHandler func() *HTTPHandler
 		setupContext func(c *gin.Context)
 		body         string
 		status       int
@@ -170,9 +169,9 @@ func Test_httpHandler_register(t *testing.T) {
 	}{
 		{
 			name: "successfully register a new user",
-			setupHandler: func() HTTPHandler {
+			setupHandler: func() *HTTPHandler {
 				authenticator := &mocks.Authenticator{}
-				signer := &mocks.Signer{}
+				signer := &mocks.SessionSigner{}
 
 				authenticator.On("Register", mock.Anything, entities.ValidUser()).Return(nil)
 
@@ -184,9 +183,9 @@ func Test_httpHandler_register(t *testing.T) {
 		},
 		{
 			name: "error to register a new user due to invalid payload",
-			setupHandler: func() HTTPHandler {
+			setupHandler: func() *HTTPHandler {
 				authenticator := &mocks.Authenticator{}
-				signer := &mocks.Signer{}
+				signer := &mocks.SessionSigner{}
 				return NewHTTPHandler(authenticator, signer)
 			},
 			body:     "{}",
@@ -195,9 +194,9 @@ func Test_httpHandler_register(t *testing.T) {
 		},
 		{
 			name: "error to register a new user due to error from register service",
-			setupHandler: func() HTTPHandler {
+			setupHandler: func() *HTTPHandler {
 				authenticator := &mocks.Authenticator{}
-				signer := &mocks.Signer{}
+				signer := &mocks.SessionSigner{}
 
 				authenticator.On("Register", mock.Anything, entities.ValidUser()).Return(errors.New("error to register user"))
 

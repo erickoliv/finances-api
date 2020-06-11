@@ -1,14 +1,11 @@
 package session
 
 import (
-	"context"
-	"reflect"
+	"errors"
 	"testing"
 	"time"
 
-	"github.com/erickoliv/finances-api/domain"
-	"github.com/erickoliv/finances-api/service"
-	"github.com/erickoliv/finances-api/test/entities"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -19,7 +16,7 @@ func TestNewJWTSigner(t *testing.T) {
 		name string
 		ttl  time.Duration
 		key  []byte
-		want service.Signer
+		want *jwtSigner
 	}{
 		{
 			name: "creates a new jwt signer",
@@ -33,46 +30,84 @@ func TestNewJWTSigner(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := NewJWTSigner(tt.key, tt.ttl); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("NewJWTSigner() = %v, want %v", got, tt.want)
-			}
+			signer := NewJWTSigner(tt.key, tt.ttl)
+			assert.Equal(t, signer, tt.want)
 		})
 	}
 }
 
-func Test_jwtSigner_SignUser(t *testing.T) {
-
-	key := []byte("simple key")
-	ttl := time.Hour
-	signer := NewJWTSigner(key, ttl)
+func Test_SignAndValidateToken(t *testing.T) {
+	signKey := []byte(time.Now().String())
 
 	tests := []struct {
-		name     string
-		signer   service.Signer
-		ctx      context.Context
-		user     *domain.User
-		contains string
-		err      error
+		name         string
+		key          []byte
+		sessionTTL   time.Duration
+		identifier   string
+		wantedSigner *jwtSigner
+		signErr      error
+		validateErr  error
 	}{
 		{
-			name:     "sign a user uuid",
-			signer:   signer,
-			ctx:      context.TODO(),
-			user:     entities.ValidUser(),
-			contains: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9",
+			name:       "successfully signs and then validate a user token",
+			key:        signKey,
+			sessionTTL: time.Hour,
+			identifier: uuid.New().String(),
+			wantedSigner: &jwtSigner{
+				key:        signKey,
+				sessionTTL: time.Hour,
+			},
 		},
 		{
-			name:   "validates a nil user",
-			signer: signer,
-			ctx:    context.TODO(),
-			err:    errInvalidUser,
+			name:       "successfully signs a user identifier but fails to validate token due to expiration",
+			key:        signKey,
+			sessionTTL: time.Millisecond,
+			identifier: uuid.New().String(),
+			wantedSigner: &jwtSigner{
+				key:        signKey,
+				sessionTTL: time.Millisecond,
+			},
+			validateErr: errors.New("jwt validate error: token is expired by 1s"),
+		},
+		{
+			name:       "error to sign due to empty user identifier",
+			key:        signKey,
+			sessionTTL: time.Hour,
+			identifier: "",
+			wantedSigner: &jwtSigner{
+				key:        signKey,
+				sessionTTL: time.Hour,
+			},
+			signErr: errEmptyIdentifier,
+		},
+		{
+			name:       "error to sign due to empty key",
+			sessionTTL: time.Hour,
+			identifier: uuid.New().String(),
+			wantedSigner: &jwtSigner{
+				sessionTTL: time.Hour,
+			},
+			signErr: errInvalidKey,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := tt.signer.SignUser(tt.ctx, tt.user)
-			assert.Contains(t, got, tt.contains)
-			assert.Equal(t, tt.err, err)
+			signer := NewJWTSigner(tt.key, tt.sessionTTL)
+			assert.Equal(t, tt.wantedSigner, signer)
+
+			token, err := signer.SignUser(tt.identifier)
+			assert.Equal(t, tt.signErr, err)
+			if err != nil {
+				return
+			}
+
+			time.Sleep(time.Second)
+			identifier, err := signer.Validate(token)
+			assert.Equal(t, tt.validateErr, err)
+			if err != nil {
+				return
+			}
+			assert.Equal(t, tt.identifier, identifier)
 		})
 	}
 }

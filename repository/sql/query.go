@@ -9,7 +9,7 @@ import (
 
 var errInvalidQuery = errors.New("invalid query")
 
-// Build is the function where the Query attributes are translated into a gorm.DB instance. Can be used to generic filter, order and pagination
+// BuildQuery is the function where the Query attributes are translated into a gorm.DB instance. Can be used to generic filter, order and pagination
 func BuildQuery(base *gorm.DB, q *rest.Query) (*gorm.DB, error) {
 	if q == nil {
 		return nil, errInvalidQuery

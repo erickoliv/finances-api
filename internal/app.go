@@ -11,7 +11,6 @@ import (
 	"github.com/erickoliv/finances-api/internal/db"
 	"github.com/erickoliv/finances-api/repository/session"
 	"github.com/erickoliv/finances-api/repository/sql"
-	"github.com/erickoliv/finances-api/service"
 	"github.com/erickoliv/finances-api/tag"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
@@ -45,7 +44,7 @@ func buildRouter(conn *gorm.DB) *gin.Engine {
 }
 
 // TODO: use a configuration service
-func makeJWTSigner() service.Signer {
+func makeJWTSigner() auth.SessionSigner {
 	appToken, found := syscall.Getenv("APP_TOKEN")
 	if !found {
 		log.Fatal("env APP_TOKEN not found")
