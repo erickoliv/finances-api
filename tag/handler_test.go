@@ -56,7 +56,7 @@ func Test_handler_GetTags(t *testing.T) {
 		{
 			name: "Should return a default paginated response",
 			setupContext: func(c *gin.Context) {
-				c.Set(domain.LoggedUser, randomUser)
+				c.Set(domain.LoggedUser, randomUser.String())
 				c.Next()
 			},
 			setupRepo: func() service.Tag {
@@ -76,7 +76,7 @@ func Test_handler_GetTags(t *testing.T) {
 		{
 			name: "Should return a error to query",
 			setupContext: func(c *gin.Context) {
-				c.Set(domain.LoggedUser, randomUser)
+				c.Set(domain.LoggedUser, randomUser.String())
 				c.Next()
 			},
 			setupRepo: func() service.Tag {
@@ -174,7 +174,7 @@ func Test_handler_CreateTag(t *testing.T) {
 				return repo
 			},
 			setupContext: func(c *gin.Context) {
-				c.Set(domain.LoggedUser, randomUser)
+				c.Set(domain.LoggedUser, randomUser.String())
 				c.Next()
 			},
 			payload:  entities.ValidTagPayload,
@@ -189,7 +189,7 @@ func Test_handler_CreateTag(t *testing.T) {
 				return repo
 			},
 			setupContext: func(c *gin.Context) {
-				c.Set(domain.LoggedUser, randomUser)
+				c.Set(domain.LoggedUser, randomUser.String())
 				c.Next()
 			},
 			payload:  entities.ValidTagPayload,
@@ -255,7 +255,7 @@ func Test_handler_GetTag(t *testing.T) {
 				return &mocks.Tag{}
 			},
 			setupContext: func(c *gin.Context) {
-				c.Set(domain.LoggedUser, loggedUser)
+				c.Set(domain.LoggedUser, loggedUser.String())
 				c.Next()
 			},
 			entity:   "invalid-uuid",
@@ -270,7 +270,7 @@ func Test_handler_GetTag(t *testing.T) {
 				return repo
 			},
 			setupContext: func(c *gin.Context) {
-				c.Set(domain.LoggedUser, loggedUser)
+				c.Set(domain.LoggedUser, loggedUser.String())
 				c.Next()
 			},
 			entity:   validEntity.String(),
@@ -285,7 +285,7 @@ func Test_handler_GetTag(t *testing.T) {
 				return repo
 			},
 			setupContext: func(c *gin.Context) {
-				c.Set(domain.LoggedUser, loggedUser)
+				c.Set(domain.LoggedUser, loggedUser.String())
 				c.Next()
 			},
 			entity:   validEntity.String(),
@@ -300,7 +300,7 @@ func Test_handler_GetTag(t *testing.T) {
 				return repo
 			},
 			setupContext: func(c *gin.Context) {
-				c.Set(domain.LoggedUser, loggedUser)
+				c.Set(domain.LoggedUser, loggedUser.String())
 				c.Next()
 			},
 			entity:   validEntity.String(),
@@ -359,7 +359,7 @@ func Test_handler_UpdateTag(t *testing.T) {
 				return &repo
 			},
 			setupContext: func(c *gin.Context) {
-				c.Set(domain.LoggedUser, validTag.Owner)
+				c.Set(domain.LoggedUser, validTag.Owner.String())
 				c.Next()
 			},
 			entity:   entities.InvalidValidTagWithoutName().UUID.String(),
@@ -383,7 +383,7 @@ func Test_handler_UpdateTag(t *testing.T) {
 				return &mocks.Tag{}
 			},
 			setupContext: func(c *gin.Context) {
-				c.Set(domain.LoggedUser, validTag.Owner)
+				c.Set(domain.LoggedUser, validTag.Owner.String())
 				c.Next()
 			},
 			entity:   "invalid param",
@@ -403,7 +403,7 @@ func Test_handler_UpdateTag(t *testing.T) {
 				return &repo
 			},
 			setupContext: func(c *gin.Context) {
-				c.Set(domain.LoggedUser, validTag.Owner)
+				c.Set(domain.LoggedUser, validTag.Owner.String())
 				c.Next()
 			},
 			entity:   validTag.UUID.String(),
@@ -423,7 +423,7 @@ func Test_handler_UpdateTag(t *testing.T) {
 				return &repo
 			},
 			setupContext: func(c *gin.Context) {
-				c.Set(domain.LoggedUser, validTag.Owner)
+				c.Set(domain.LoggedUser, validTag.Owner.String())
 				c.Next()
 			},
 			entity:   validTag.UUID.String(),
@@ -443,7 +443,7 @@ func Test_handler_UpdateTag(t *testing.T) {
 				return &repo
 			},
 			setupContext: func(c *gin.Context) {
-				c.Set(domain.LoggedUser, validTag.Owner)
+				c.Set(domain.LoggedUser, validTag.Owner.String())
 				c.Next()
 			},
 			entity:   validTag.UUID.String(),
@@ -464,7 +464,7 @@ func Test_handler_UpdateTag(t *testing.T) {
 				return &repo
 			},
 			setupContext: func(c *gin.Context) {
-				c.Set(domain.LoggedUser, validTag.Owner)
+				c.Set(domain.LoggedUser, validTag.Owner.String())
 				c.Next()
 			},
 			entity:   validTag.UUID.String(),
@@ -564,7 +564,7 @@ func Test_handler_DeleteTag(t *testing.T) {
 
 			if tt.setupContext == nil {
 				tt.setupContext = func(c *gin.Context) {
-					c.Set(domain.LoggedUser, loggedUser)
+					c.Set(domain.LoggedUser, loggedUser.String())
 					c.Next()
 				}
 			}

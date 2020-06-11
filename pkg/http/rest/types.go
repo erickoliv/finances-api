@@ -73,17 +73,12 @@ func ExtractFilters(c *gin.Context, needUser bool) (*Query, error) {
 }
 
 func ExtractUser(c *gin.Context) (uuid.UUID, error) {
-	user, found := c.Get(domain.LoggedUser)
-	if !found {
+	identifier := c.GetString(domain.LoggedUser)
+	if len(identifier) == 0 {
 		return uuid.Nil, errors.New("user not present in context")
 	}
 
-	pk, ok := user.(uuid.UUID)
-	if !ok {
-		return uuid.Nil, errors.New("user in context is invalid")
-	}
-
-	return pk, nil
+	return uuid.Parse(identifier)
 }
 
 func ExtractUUID(c *gin.Context) (uuid.UUID, error) {

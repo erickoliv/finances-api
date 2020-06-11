@@ -56,7 +56,7 @@ func Test_handler_GetAccounts(t *testing.T) {
 		{
 			name: "Should return a default paginated response",
 			setupContext: func(c *gin.Context) {
-				c.Set(domain.LoggedUser, randomUser)
+				c.Set(domain.LoggedUser, randomUser.String())
 				c.Next()
 			},
 			setupRepo: func() service.Account {
@@ -76,7 +76,7 @@ func Test_handler_GetAccounts(t *testing.T) {
 		{
 			name: "Should return a error to query",
 			setupContext: func(c *gin.Context) {
-				c.Set(domain.LoggedUser, randomUser)
+				c.Set(domain.LoggedUser, randomUser.String())
 				c.Next()
 			},
 			setupRepo: func() service.Account {
@@ -160,7 +160,7 @@ func Test_handler_CreateAccount(t *testing.T) {
 				return &mocks.Account{}
 			},
 			setupContext: func(c *gin.Context) {
-				c.Set(domain.LoggedUser, randomUser)
+				c.Set(domain.LoggedUser, randomUser.String())
 				c.Next()
 			},
 			payload:  "{}",
@@ -175,7 +175,7 @@ func Test_handler_CreateAccount(t *testing.T) {
 				return repo
 			},
 			setupContext: func(c *gin.Context) {
-				c.Set(domain.LoggedUser, randomUser)
+				c.Set(domain.LoggedUser, randomUser.String())
 				c.Next()
 			},
 			payload:  entities.ValidAccountPayload,
@@ -190,7 +190,7 @@ func Test_handler_CreateAccount(t *testing.T) {
 				return repo
 			},
 			setupContext: func(c *gin.Context) {
-				c.Set(domain.LoggedUser, randomUser)
+				c.Set(domain.LoggedUser, randomUser.String())
 				c.Next()
 			},
 			payload: entities.ValidAccountPayload,
@@ -255,7 +255,7 @@ func Test_handler_GetAccount(t *testing.T) {
 				return &mocks.Account{}
 			},
 			setupContext: func(c *gin.Context) {
-				c.Set(domain.LoggedUser, loggedUser)
+				c.Set(domain.LoggedUser, loggedUser.String())
 				c.Next()
 			},
 			entity:   "invalid-uuid",
@@ -270,7 +270,7 @@ func Test_handler_GetAccount(t *testing.T) {
 				return repo
 			},
 			setupContext: func(c *gin.Context) {
-				c.Set(domain.LoggedUser, loggedUser)
+				c.Set(domain.LoggedUser, loggedUser.String())
 				c.Next()
 			},
 			entity:   validEntity.String(),
@@ -285,7 +285,7 @@ func Test_handler_GetAccount(t *testing.T) {
 				return repo
 			},
 			setupContext: func(c *gin.Context) {
-				c.Set(domain.LoggedUser, loggedUser)
+				c.Set(domain.LoggedUser, loggedUser.String())
 				c.Next()
 			},
 			entity:   validEntity.String(),
@@ -300,7 +300,7 @@ func Test_handler_GetAccount(t *testing.T) {
 				return repo
 			},
 			setupContext: func(c *gin.Context) {
-				c.Set(domain.LoggedUser, loggedUser)
+				c.Set(domain.LoggedUser, loggedUser.String())
 				c.Next()
 			},
 			entity:   validEntity.String(),
@@ -359,7 +359,7 @@ func Test_handler_UpdateAccount(t *testing.T) {
 				return &repo
 			},
 			setupContext: func(c *gin.Context) {
-				c.Set(domain.LoggedUser, validAccount.Owner)
+				c.Set(domain.LoggedUser, validAccount.Owner.String())
 				c.Next()
 			},
 			entity:   entities.ValidAccountWithoutName().UUID.String(),
@@ -383,7 +383,7 @@ func Test_handler_UpdateAccount(t *testing.T) {
 				return &mocks.Account{}
 			},
 			setupContext: func(c *gin.Context) {
-				c.Set(domain.LoggedUser, validAccount.Owner)
+				c.Set(domain.LoggedUser, validAccount.Owner.String())
 				c.Next()
 			},
 			entity:   "invalid param",
@@ -403,7 +403,7 @@ func Test_handler_UpdateAccount(t *testing.T) {
 				return &repo
 			},
 			setupContext: func(c *gin.Context) {
-				c.Set(domain.LoggedUser, validAccount.Owner)
+				c.Set(domain.LoggedUser, validAccount.Owner.String())
 				c.Next()
 			},
 			entity:   validAccount.UUID.String(),
@@ -423,7 +423,7 @@ func Test_handler_UpdateAccount(t *testing.T) {
 				return &repo
 			},
 			setupContext: func(c *gin.Context) {
-				c.Set(domain.LoggedUser, validAccount.Owner)
+				c.Set(domain.LoggedUser, validAccount.Owner.String())
 				c.Next()
 			},
 			entity:   validAccount.UUID.String(),
@@ -443,7 +443,7 @@ func Test_handler_UpdateAccount(t *testing.T) {
 				return &repo
 			},
 			setupContext: func(c *gin.Context) {
-				c.Set(domain.LoggedUser, validAccount.Owner)
+				c.Set(domain.LoggedUser, validAccount.Owner.String())
 				c.Next()
 			},
 			entity:   validAccount.UUID.String(),
@@ -464,7 +464,7 @@ func Test_handler_UpdateAccount(t *testing.T) {
 				return &repo
 			},
 			setupContext: func(c *gin.Context) {
-				c.Set(domain.LoggedUser, validAccount.Owner)
+				c.Set(domain.LoggedUser, validAccount.Owner.String())
 				c.Next()
 			},
 			entity:   validAccount.UUID.String(),
@@ -564,7 +564,7 @@ func Test_handler_DeleteAccount(t *testing.T) {
 
 			if tt.setupContext == nil {
 				tt.setupContext = func(c *gin.Context) {
-					c.Set(domain.LoggedUser, loggedUser)
+					c.Set(domain.LoggedUser, loggedUser.String())
 					c.Next()
 				}
 			}
