@@ -5,11 +5,10 @@ import (
 	"errors"
 
 	"github.com/erickoliv/finances-api/domain"
-	"github.com/erickoliv/finances-api/service"
 	"github.com/jinzhu/gorm"
 )
 
-type authRepo struct {
+type AuthRepo struct {
 	db *gorm.DB
 }
 
@@ -19,14 +18,14 @@ var (
 	errInvalidUser   = errors.New("user or password invalid")
 )
 
-// MakeAuthenticator returns a service.Authenticator sql implementation using gorm
-func MakeAuthenticator(db *gorm.DB) service.Authenticator {
-	return &authRepo{
+// MakeAuthenticator returns a Authenticator sql implementation using gorm
+func MakeAuthenticator(db *gorm.DB) *AuthRepo {
+	return &AuthRepo{
 		db,
 	}
 }
 
-func (repo *authRepo) Login(ctx context.Context, username string, password string) (*domain.User, error) {
+func (repo *AuthRepo) Login(ctx context.Context, username string, password string) (*domain.User, error) {
 	if username == "" {
 		return nil, errEmptyUsername
 	}
@@ -43,7 +42,7 @@ func (repo *authRepo) Login(ctx context.Context, username string, password strin
 	return user, result.Error
 }
 
-func (repo *authRepo) Register(ctx context.Context, user *domain.User) error {
+func (repo *AuthRepo) Register(ctx context.Context, user *domain.User) error {
 	if user == nil {
 		return errInvalidUser
 	}

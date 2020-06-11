@@ -1,22 +1,27 @@
 package auth
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
 	"github.com/erickoliv/finances-api/domain"
-	"github.com/erickoliv/finances-api/service"
 	"github.com/gin-gonic/gin"
 )
 
-// HTTPHandler is a interface to expose account manipulation using HTTP
-type HTTPHandler interface {
-	Router(*gin.RouterGroup)
+type SessionSigner interface {
+	SignUser(identifier string) (string, error)
+	Validate(token string) (string, error)
 }
 
-type httpHandler struct {
-	auth service.Authenticator
-	sign service.Signer
+type Authenticator interface {
+	Login(ctx context.Context, username string, password string) (*domain.User, error)
+	Register(ctx context.Context, user *domain.User) error
+}
+
+type HTTPHandler struct {
+	auth   Authenticator
+	signer SessionSigner
 }
 
 type credential struct {
@@ -25,20 +30,19 @@ type credential struct {
 }
 
 // NewHTTPHandler receives a Account Service, returning a internal a HTTP account handler
-func NewHTTPHandler(authenticator service.Authenticator, signer service.Signer) HTTPHandler {
-	return &httpHandler{
-		auth: authenticator,
-		sign: signer,
+func NewHTTPHandler(authenticator Authenticator, signer SessionSigner) *HTTPHandler {
+	return &HTTPHandler{
+		auth:   authenticator,
+		signer: signer,
 	}
 }
 
-func (handler *httpHandler) Router(group *gin.RouterGroup) {
+func (handler *HTTPHandler) Router(group *gin.RouterGroup) {
 	group.POST("/login", handler.login)
 	group.POST("/register", handler.register)
 }
 
-func (handler *httpHandler) login(c *gin.Context) {
-
+func (handler *HTTPHandler) login(c *gin.Context) {
 	credentials := credential{}
 	if err := c.ShouldBindJSON(&credentials); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
@@ -55,7 +59,7 @@ func (handler *httpHandler) login(c *gin.Context) {
 		return
 	}
 
-	cookie, err := handler.sign.SignUser(c, user)
+	cookie, err := handler.signer.SignUser(user.UUID.String())
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 			"message": err.Error(),
@@ -70,7 +74,7 @@ func (handler *httpHandler) login(c *gin.Context) {
 	})
 }
 
-func (handler *httpHandler) register(c *gin.Context) {
+func (handler *HTTPHandler) register(c *gin.Context) {
 	user := &domain.User{}
 	if err := c.Bind(user); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
