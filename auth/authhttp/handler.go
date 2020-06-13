@@ -1,27 +1,16 @@
-package auth
+package authhttp
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 
-	"github.com/erickoliv/finances-api/domain"
+	"github.com/erickoliv/finances-api/auth"
 	"github.com/gin-gonic/gin"
 )
 
-type SessionSigner interface {
-	SignUser(identifier string) (string, error)
-	Validate(token string) (string, error)
-}
-
-type Authenticator interface {
-	Login(ctx context.Context, username string, password string) (*domain.User, error)
-	Register(ctx context.Context, user *domain.User) error
-}
-
 type HTTPHandler struct {
-	auth   Authenticator
-	signer SessionSigner
+	auth   auth.Authenticator
+	signer auth.SessionSigner
 }
 
 type credential struct {
@@ -29,8 +18,8 @@ type credential struct {
 	Password string `json:"password" binding:"required" `
 }
 
-// NewHTTPHandler receives a Account Service, returning a internal a HTTP account handler
-func NewHTTPHandler(authenticator Authenticator, signer SessionSigner) *HTTPHandler {
+// NewHTTPHandler receives a authenticator and a signer Service, returning a internal a HTTP account handler
+func NewHTTPHandler(authenticator auth.Authenticator, signer auth.SessionSigner) *HTTPHandler {
 	return &HTTPHandler{
 		auth:   authenticator,
 		signer: signer,
@@ -67,7 +56,7 @@ func (handler *HTTPHandler) login(c *gin.Context) {
 		return
 	}
 
-	c.SetCookie(domain.AuthCookie, cookie, 0, "/", "", false, true)
+	c.SetCookie(auth.AuthCookie, cookie, 0, "/", "", false, true)
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": cookie,
@@ -75,7 +64,7 @@ func (handler *HTTPHandler) login(c *gin.Context) {
 }
 
 func (handler *HTTPHandler) register(c *gin.Context) {
-	user := &domain.User{}
+	user := &auth.User{}
 	if err := c.Bind(user); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 			"message": err.Error(),

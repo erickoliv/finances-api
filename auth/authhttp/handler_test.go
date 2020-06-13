@@ -1,4 +1,4 @@
-package auth
+package authhttp
 
 import (
 	"encoding/json"
@@ -9,8 +9,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/erickoliv/finances-api/auth"
 	"github.com/erickoliv/finances-api/auth/mocks"
-	"github.com/erickoliv/finances-api/test/entities"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -29,8 +29,8 @@ func TestNewHTTPHandler(t *testing.T) {
 
 	tests := []struct {
 		name          string
-		authenticator Authenticator
-		signer        SessionSigner
+		authenticator auth.Authenticator
+		signer        auth.SessionSigner
 		want          *HTTPHandler
 	}{
 		{
@@ -76,8 +76,8 @@ func Test_httpHandler_login(t *testing.T) {
 				authenticator := &mocks.Authenticator{}
 				signer := &mocks.SessionSigner{}
 
-				authenticator.On("Login", mock.Anything, validCredential.Username, validCredential.Password).Return(entities.ValidUser(), nil)
-				signer.On("SignUser", entities.ValidUser().UUID.String()).Return("token", nil)
+				authenticator.On("Login", mock.Anything, validCredential.Username, validCredential.Password).Return(mocks.ValidUser(), nil)
+				signer.On("SignUser", mocks.ValidUser().UUID.String()).Return("token", nil)
 
 				return NewHTTPHandler(authenticator, signer)
 			},
@@ -115,8 +115,8 @@ func Test_httpHandler_login(t *testing.T) {
 				authenticator := &mocks.Authenticator{}
 				signer := &mocks.SessionSigner{}
 
-				authenticator.On("Login", mock.Anything, validCredential.Username, validCredential.Password).Return(entities.ValidUser(), nil)
-				signer.On("SignUser", entities.ValidUser().UUID.String()).Return("", errors.New("error to generate token"))
+				authenticator.On("Login", mock.Anything, validCredential.Username, validCredential.Password).Return(mocks.ValidUser(), nil)
+				signer.On("SignUser", mocks.ValidUser().UUID.String()).Return("", errors.New("error to generate token"))
 
 				return NewHTTPHandler(authenticator, signer)
 			},
@@ -173,11 +173,11 @@ func Test_httpHandler_register(t *testing.T) {
 				authenticator := &mocks.Authenticator{}
 				signer := &mocks.SessionSigner{}
 
-				authenticator.On("Register", mock.Anything, entities.ValidUser()).Return(nil)
+				authenticator.On("Register", mock.Anything, mocks.ValidUser()).Return(nil)
 
 				return NewHTTPHandler(authenticator, signer)
 			},
-			body:     serialize(entities.ValidUser()),
+			body:     serialize(mocks.ValidUser()),
 			status:   http.StatusCreated,
 			response: "",
 		},
@@ -198,11 +198,11 @@ func Test_httpHandler_register(t *testing.T) {
 				authenticator := &mocks.Authenticator{}
 				signer := &mocks.SessionSigner{}
 
-				authenticator.On("Register", mock.Anything, entities.ValidUser()).Return(errors.New("error to register user"))
+				authenticator.On("Register", mock.Anything, mocks.ValidUser()).Return(errors.New("error to register user"))
 
 				return NewHTTPHandler(authenticator, signer)
 			},
-			body:     serialize(entities.ValidUser()),
+			body:     serialize(mocks.ValidUser()),
 			status:   http.StatusInternalServerError,
 			response: `{"message":"registration error"}`,
 		},

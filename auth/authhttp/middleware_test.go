@@ -1,4 +1,4 @@
-package auth
+package authhttp
 
 import (
 	"errors"
@@ -7,9 +7,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/erickoliv/finances-api/auth"
 	"github.com/erickoliv/finances-api/auth/mocks"
 	"github.com/erickoliv/finances-api/domain"
-	"github.com/erickoliv/finances-api/test/entities"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 )
@@ -17,20 +17,20 @@ import (
 func TestMiddleware(t *testing.T) {
 
 	validCookie := http.Cookie{
-		Name:  domain.AuthCookie,
+		Name:  auth.AuthCookie,
 		Value: "a value",
 	}
 
 	tests := []struct {
 		name     string
-		signer   func() SessionSigner
+		signer   func() auth.SessionSigner
 		cookie   http.Cookie
 		status   int
 		response string
 	}{
 		{
 			name: "validate request without auth cookie",
-			signer: func() SessionSigner {
+			signer: func() auth.SessionSigner {
 				return &mocks.SessionSigner{}
 			},
 			status:   http.StatusUnauthorized,
@@ -38,7 +38,7 @@ func TestMiddleware(t *testing.T) {
 		},
 		{
 			name: "error to validate auth cookie",
-			signer: func() SessionSigner {
+			signer: func() auth.SessionSigner {
 				signer := &mocks.SessionSigner{}
 
 				signer.On("Validate", validCookie.Value).Return("", errors.New("invalid auth token"))
@@ -50,15 +50,15 @@ func TestMiddleware(t *testing.T) {
 		},
 		{
 			name: "successfully validate auth token and set user uuid into context",
-			signer: func() SessionSigner {
+			signer: func() auth.SessionSigner {
 				signer := &mocks.SessionSigner{}
 
-				signer.On("Validate", validCookie.Value).Return(entities.ValidUser().UUID.String(), nil)
+				signer.On("Validate", validCookie.Value).Return(mocks.ValidUser().UUID.String(), nil)
 				return signer
 			},
 			status:   http.StatusOK,
 			cookie:   validCookie,
-			response: entities.ValidUser().UUID.String(),
+			response: mocks.ValidUser().UUID.String(),
 		},
 	}
 	for _, tt := range tests {

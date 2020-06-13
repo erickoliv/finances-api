@@ -7,6 +7,7 @@ import (
 
 	"github.com/erickoliv/finances-api/account"
 	"github.com/erickoliv/finances-api/auth"
+	"github.com/erickoliv/finances-api/auth/authhttp"
 	"github.com/erickoliv/finances-api/categories/categoryhttp"
 	"github.com/erickoliv/finances-api/index"
 	"github.com/erickoliv/finances-api/internal/db"
@@ -27,11 +28,11 @@ func buildRouter(conn *gorm.DB) *gin.Engine {
 	security := r.Group("/auth")
 	authenticator := sql.MakeAuthenticator(conn)
 	signer := makeJWTSigner()
-	authHandler := auth.NewHTTPHandler(authenticator, signer)
+	authHandler := authhttp.NewHTTPHandler(authenticator, signer)
 	authHandler.Router(security)
 
 	api := r.Group("/api")
-	api.Use(auth.Middleware(signer))
+	api.Use(authhttp.Middleware(signer))
 
 	accountRepo := sql.MakeAccounts(conn)
 	accounts := account.NewHTTPHandler(accountRepo)
