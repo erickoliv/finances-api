@@ -4,6 +4,8 @@
 [![HitCount](http://hits.dwyl.io/erickoliv/erickoliv/finances-api.svg)](http://hits.dwyl.io/erickoliv/erickoliv/finances-api)
 > This is just a personal project I'm using to learn the Go programming language and its libraries.
 
+*Using different package approaches to validate the better structure for each use case*
+
 #### The road so far
 - [x] configs from environment
 - [x] go modules
