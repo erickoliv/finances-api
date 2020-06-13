@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/erickoliv/finances-api/categories"
 	"github.com/erickoliv/finances-api/domain"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
@@ -27,10 +28,10 @@ func Prepare() *gorm.DB {
 		log.Fatal(err)
 	}
 	db.LogMode(true)
-	// database migrations, pendind real migration startup
+	// database migrations, pendind real migration startup using plain sql scripts
 	db.AutoMigrate(&domain.Tag{})
 	db.AutoMigrate(&domain.User{})
-	db.AutoMigrate(&domain.Category{})
+	db.AutoMigrate(&categories.Category{})
 	db.AutoMigrate(&domain.Account{})
 	db.AutoMigrate(&domain.Entry{})
 	db.AutoMigrate(&domain.EntryTag{})

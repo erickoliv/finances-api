@@ -7,6 +7,7 @@ import (
 
 	"github.com/erickoliv/finances-api/account"
 	"github.com/erickoliv/finances-api/auth"
+	"github.com/erickoliv/finances-api/categories/categoryhttp"
 	"github.com/erickoliv/finances-api/index"
 	"github.com/erickoliv/finances-api/internal/db"
 	"github.com/erickoliv/finances-api/repository/session"
@@ -39,6 +40,10 @@ func buildRouter(conn *gorm.DB) *gin.Engine {
 	tagRepo := sql.BuildTagRepository(conn)
 	tags := tag.NewHTTPHandler(tagRepo)
 	tags.Router(api)
+
+	categoryRepo := sql.BuildCategoryRepository(conn)
+	categories := categoryhttp.NewHandler(categoryRepo)
+	categories.Router(api)
 
 	return r
 }
