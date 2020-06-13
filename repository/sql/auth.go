@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/erickoliv/finances-api/domain"
+	"github.com/erickoliv/finances-api/auth"
 	"github.com/jinzhu/gorm"
 )
 
@@ -25,7 +25,7 @@ func MakeAuthenticator(db *gorm.DB) *AuthRepo {
 	}
 }
 
-func (repo *AuthRepo) Login(ctx context.Context, username string, password string) (*domain.User, error) {
+func (repo *AuthRepo) Login(ctx context.Context, username string, password string) (*auth.User, error) {
 	if username == "" {
 		return nil, errEmptyUsername
 	}
@@ -33,7 +33,7 @@ func (repo *AuthRepo) Login(ctx context.Context, username string, password strin
 		return nil, errEmptyPassword
 	}
 
-	user := &domain.User{}
+	user := &auth.User{}
 	result := repo.db.First(user, "username = ? AND password = crypt(?, password)", username, password)
 	if result.RecordNotFound() {
 		return nil, errInvalidUser
@@ -42,7 +42,7 @@ func (repo *AuthRepo) Login(ctx context.Context, username string, password strin
 	return user, result.Error
 }
 
-func (repo *AuthRepo) Register(ctx context.Context, user *domain.User) error {
+func (repo *AuthRepo) Register(ctx context.Context, user *auth.User) error {
 	if user == nil {
 		return errInvalidUser
 	}
