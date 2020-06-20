@@ -260,7 +260,7 @@ func Test_handler_GetTag(t *testing.T) {
 			},
 			entity:   "invalid-uuid",
 			status:   http.StatusInternalServerError,
-			response: `{"message":"uuid parameter is invalid"}`,
+			response: `{"message":"invalid uuid in context: invalid UUID length: 12"}`,
 		},
 		{
 			name: "error to get tag from repository",
@@ -389,7 +389,7 @@ func Test_handler_UpdateTag(t *testing.T) {
 			entity:   "invalid param",
 			payload:  serializeTag(validTag),
 			status:   http.StatusInternalServerError,
-			response: `{"message":"uuid parameter is invalid"}`,
+			response: `{"message":"invalid uuid in context: invalid UUID length: 13"}`,
 		},
 		{
 			name: "returns error to update a tag",
@@ -544,7 +544,7 @@ func Test_handler_DeleteTag(t *testing.T) {
 			},
 			pk:       "invalid param",
 			status:   http.StatusBadRequest,
-			response: `{"message":"uuid parameter is invalid"}`,
+			response: `{"message":"invalid uuid in context: invalid UUID length: 13"}`,
 		},
 		{
 			name: "error to delete a tag",
