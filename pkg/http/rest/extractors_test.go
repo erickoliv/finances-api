@@ -2,9 +2,9 @@ package rest
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -65,32 +65,49 @@ func TestExtractUser(t *testing.T) {
 			req, _ := http.NewRequest("GET", "/", nil)
 			resp := httptest.NewRecorder()
 			router.ServeHTTP(resp, req)
+			assert.Equal(t, http.StatusOK, resp.Result().StatusCode)
 		})
 	}
 }
 
 func TestExtractUUID(t *testing.T) {
-	type args struct {
-		c *gin.Context
-	}
+	validUUID := uuid.New()
+
 	tests := []struct {
-		name    string
-		args    args
-		want    uuid.UUID
-		wantErr bool
+		name string
+		url  string
+		want uuid.UUID
+		err  error
 	}{
-		// TODO: Add test cases.
+		{
+			name: "successfully gets a uuid from url param using extractor",
+			want: validUUID,
+			url:  fmt.Sprintf("/%s", validUUID.String()),
+			err:  nil,
+		},
+		{
+			name: "error to get a valid uuid using extractor",
+			url:  fmt.Sprintf("/invalid-value"),
+			err:  errors.New("invalid uuid in context: invalid UUID length: 13"),
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := ExtractUUID(tt.args.c)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("ExtractUUID() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("ExtractUUID() = %v, want %v", got, tt.want)
-			}
+			router := gin.New()
+			router.GET("/:uuid", func(c *gin.Context) {
+				identifier, err := ExtractUUID(c)
+
+				assert.Equal(t, tt.want, identifier)
+				assert.Equal(t, tt.err, err)
+
+				c.JSON(http.StatusOK, ":)")
+			})
+
+			req, _ := http.NewRequest("GET", tt.url, nil)
+			resp := httptest.NewRecorder()
+			router.ServeHTTP(resp, req)
+
+			assert.Equal(t, http.StatusOK, resp.Result().StatusCode)
 		})
 	}
 }

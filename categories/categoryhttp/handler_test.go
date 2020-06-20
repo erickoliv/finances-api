@@ -259,7 +259,7 @@ func Test_handler_GetCategory(t *testing.T) {
 			},
 			entity:   "invalid-uuid",
 			status:   http.StatusInternalServerError,
-			response: `{"message":"uuid parameter is invalid"}`,
+			response: `{"message":"invalid uuid in context: invalid UUID length: 12"}`,
 		},
 		{
 			name: "error to get category from repository",
@@ -388,7 +388,7 @@ func Test_handler_UpdateCategory(t *testing.T) {
 			entity:   "invalid param",
 			payload:  serializeCategory(validTag),
 			status:   http.StatusInternalServerError,
-			response: `{"message":"uuid parameter is invalid"}`,
+			response: `{"message":"invalid uuid in context: invalid UUID length: 13"}`,
 		},
 		{
 			name: "returns error to update a category",
@@ -543,7 +543,7 @@ func Test_handler_DeleteCategory(t *testing.T) {
 			},
 			pk:       "invalid param",
 			status:   http.StatusBadRequest,
-			response: `{"message":"uuid parameter is invalid"}`,
+			response: `{"message":"invalid uuid in context: invalid UUID length: 13"}`,
 		},
 		{
 			name: "error to delete a category",

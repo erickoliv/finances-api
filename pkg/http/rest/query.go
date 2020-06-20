@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 // ExtractFilters can be used to parse query parameters and return a Query object, useful to query, filter and paginate requests
@@ -19,8 +20,9 @@ func ExtractFilters(c *gin.Context, needUser bool) (*Query, error) {
 		Page:  1,
 		Limit: 100,
 	}
-
-	filters["owner = ?"] = user
+	if user != uuid.Nil {
+		filters["owner = ?"] = user
+	}
 
 	f := c.Request.URL.Query()
 

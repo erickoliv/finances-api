@@ -2,6 +2,7 @@ package rest
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/erickoliv/finances-api/domain"
 	"github.com/gin-gonic/gin"
@@ -22,7 +23,7 @@ func ExtractUser(c *gin.Context) (uuid.UUID, error) {
 func ExtractUUID(c *gin.Context) (uuid.UUID, error) {
 	pk, err := uuid.Parse(c.Param("uuid"))
 	if err != nil {
-		return uuid.Nil, errors.New("uuid parameter is invalid")
+		return uuid.Nil, fmt.Errorf("invalid uuid in context: %v", err)
 	}
 	return pk, nil
 }

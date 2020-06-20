@@ -260,7 +260,7 @@ func Test_handler_GetAccount(t *testing.T) {
 			},
 			entity:   "invalid-uuid",
 			status:   http.StatusInternalServerError,
-			response: `{"message":"uuid parameter is invalid"}`,
+			response: `{"message":"invalid uuid in context: invalid UUID length: 12"}`,
 		},
 		{
 			name: "error to get account from repository",
@@ -389,7 +389,7 @@ func Test_handler_UpdateAccount(t *testing.T) {
 			entity:   "invalid param",
 			payload:  serializeAccount(validAccount),
 			status:   http.StatusInternalServerError,
-			response: `{"message":"uuid parameter is invalid"}`,
+			response: `{"message":"invalid uuid in context: invalid UUID length: 13"}`,
 		},
 		{
 			name: "returns error to update a account",
@@ -544,7 +544,7 @@ func Test_handler_DeleteAccount(t *testing.T) {
 			},
 			pk:       "invalid param",
 			status:   http.StatusBadRequest,
-			response: `{"message":"uuid parameter is invalid"}`,
+			response: `{"message":"invalid uuid in context: invalid UUID length: 13"}`,
 		},
 		{
 			name: "error to delete a account",
