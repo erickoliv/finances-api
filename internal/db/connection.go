@@ -8,6 +8,7 @@ import (
 	"github.com/erickoliv/finances-api/auth"
 	"github.com/erickoliv/finances-api/categories"
 	"github.com/erickoliv/finances-api/domain"
+	"github.com/erickoliv/finances-api/entries"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres" // for pg dialect
@@ -34,7 +35,7 @@ func Prepare() *gorm.DB {
 	db.AutoMigrate(&auth.User{})
 	db.AutoMigrate(&categories.Category{})
 	db.AutoMigrate(&domain.Account{})
-	db.AutoMigrate(&domain.Entry{})
+	db.AutoMigrate(&entries.Entry{})
 	db.AutoMigrate(&domain.EntryTag{})
 
 	return db
