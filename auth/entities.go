@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jinzhu/gorm"
 )
 
 // AuthCookie is cookie name used in autentication api, maybe use a injected parameter instead
@@ -26,4 +27,10 @@ type User struct {
 // TableName set user table name
 func (User) TableName() string {
 	return "public.users"
+}
+
+// BeforeCreate execute commands before creating User
+func (User) BeforeCreate(scope *gorm.Scope) (err error) {
+	err = scope.SetColumn("UUID", uuid.New())
+	return
 }

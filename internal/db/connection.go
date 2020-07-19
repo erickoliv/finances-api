@@ -9,7 +9,6 @@ import (
 	"github.com/erickoliv/finances-api/categories"
 	"github.com/erickoliv/finances-api/domain"
 	"github.com/erickoliv/finances-api/entries"
-	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres" // for pg dialect
 )
@@ -48,12 +47,4 @@ func getEnvConfig(s string) string {
 
 	log.Fatalf("Environment variable %s not found", s)
 	return ""
-}
-
-// Middleware adds a gorm.DB connection pool reference inside gin.Context
-func Middleware(db *gorm.DB) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		c.Set(domain.DB, db)
-		c.Next()
-	}
 }
