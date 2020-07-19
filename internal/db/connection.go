@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/erickoliv/finances-api/accounts"
 	"github.com/erickoliv/finances-api/auth"
 	"github.com/erickoliv/finances-api/categories"
 	"github.com/erickoliv/finances-api/domain"
@@ -33,7 +34,7 @@ func Prepare() *gorm.DB {
 	db.AutoMigrate(&domain.Tag{})
 	db.AutoMigrate(&auth.User{})
 	db.AutoMigrate(&categories.Category{})
-	db.AutoMigrate(&domain.Account{})
+	db.AutoMigrate(&accounts.Account{})
 	db.AutoMigrate(&entries.Entry{})
 	db.AutoMigrate(&domain.EntryTag{})
 
