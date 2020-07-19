@@ -1,25 +1,30 @@
+.PHONY : help
 SHELL=bash
 
 -include .env
 export
 
-run:
+help: Makefile
+	@sed -n 's/^##//p' $<
+
+## run: execute application with go run 
+run: 
 	go run main.go
 
-dev:
+## dev: deploy local deployment with docker + docker-compose
+dev: 
 	rm -f finances-api
-	docker-compose up --build
+	docker-compose up --build --force-recreate
 
-build:
-	go build 
-
+## push: build docker image, pushing to remote repository. IMAGE_NAME and IMAGE_VERSION can be configured in .env file 
 push:
 	docker build . -t ${IMAGE_NAME}:${IMAGE_VERSION}
 	docker push ${IMAGE_NAME}:${IMAGE_VERSION}
 
+## tests: execute go tests with race condition enabled and code coverage (used in travis and codecov)
 tests:
 	go test -count=1 -cover -race -coverprofile=coverage.out -covermode=atomic ./...
 
-full-test:
-	rm -f finances-api
-	docker-compose up --build --force-recreate
+## database: execute only database server inside docker container 
+database:	
+	docker-compose up -d database

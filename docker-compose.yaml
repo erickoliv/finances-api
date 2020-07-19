@@ -1,6 +1,7 @@
 version: '3'
 services:
   database:
+    container_name: financesdb
     image: postgres
     restart: always
     ports:
@@ -10,20 +11,22 @@ services:
       - 'POSTGRES_PASSWORD=${DB_PASSWORD}' 
   api:
     image: ${IMAGE_NAME}:${IMAGE_VERSION}
-    environment:
-      - "APP_TOKEN=${APP_TOKEN}"
-      - "DB_URL=${DB_URL}"
+    build: .
+    env_file:
+      - .env
+    environment:      
+      - 'DB_HOST=database'
     depends_on:
       - database
     ports:
       # TODO: add balancer
       - "80:8080"
-    deploy:      
-      resources:
-        limits:
-          cpus: '0.8'
-          memory: 50M
-        reservations:
-          cpus: '0.1'
-          memory: 20M
+    # deploy:      
+    #   resources:
+    #     limits:
+    #       cpus: '0.8'
+    #       memory: 50M
+    #     reservations:
+    #       cpus: '0.1'
+    #       memory: 20M
     restart: always      
