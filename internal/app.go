@@ -5,7 +5,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/erickoliv/finances-api/account"
+	"github.com/erickoliv/finances-api/accounts/accounthttp"
+	"github.com/erickoliv/finances-api/accounts/accountsql"
 	"github.com/erickoliv/finances-api/auth"
 	"github.com/erickoliv/finances-api/auth/authhttp"
 	"github.com/erickoliv/finances-api/categories/categoryhttp"
@@ -25,8 +26,6 @@ func buildRouter(conn *gorm.DB) *gin.Engine {
 	r := gin.Default()
 	r.GET("/", index.Handler)
 
-	r.Use(db.Middleware(conn))
-
 	security := r.Group("/auth")
 	authenticator := sql.MakeAuthenticator(conn)
 	signer := makeJWTSigner()
@@ -36,8 +35,8 @@ func buildRouter(conn *gorm.DB) *gin.Engine {
 	api := r.Group("/api")
 	api.Use(authhttp.Middleware(signer))
 
-	accountRepo := sql.MakeAccounts(conn)
-	accounts := account.NewHTTPHandler(accountRepo)
+	accountRepo := accountsql.MakeAccounts(conn)
+	accounts := accounthttp.NewHTTPHandler(accountRepo)
 	accounts.Router(api)
 
 	tagRepo := sql.BuildTagRepository(conn)

@@ -1,12 +1,12 @@
-package account
+package accounthttp
 
 import (
 	"net/http"
 
+	"github.com/erickoliv/finances-api/accounts"
 	"github.com/erickoliv/finances-api/pkg/http/rest"
-	"github.com/erickoliv/finances-api/service"
+	"github.com/google/uuid"
 
-	"github.com/erickoliv/finances-api/domain"
 	"github.com/gin-gonic/gin"
 )
 
@@ -16,11 +16,11 @@ type HTTPHandler interface {
 }
 
 type handler struct {
-	repo service.Account
+	repo accounts.Repository
 }
 
 // NewHTTPHandler receives a Account Service, returning a internal a HTTP account handler
-func NewHTTPHandler(repo service.Account) HTTPHandler {
+func NewHTTPHandler(repo accounts.Repository) HTTPHandler {
 	return handler{
 		repo: repo,
 	}
@@ -71,7 +71,7 @@ func (view handler) CreateAccount(c *gin.Context) {
 		return
 	}
 
-	account := &domain.Account{
+	account := &accounts.Account{
 		Owner: user,
 	}
 	if err := c.ShouldBind(account); err != nil {
@@ -109,7 +109,7 @@ func (view handler) GetAccount(c *gin.Context) {
 		return
 	}
 
-	if row.IsNew() {
+	if row.UUID == uuid.Nil {
 		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"message": "account not found"})
 		return
 	}
@@ -119,7 +119,7 @@ func (view handler) GetAccount(c *gin.Context) {
 
 // UpdateAccount can be called to update a specific account. The uuid used to query is part of the url
 func (view handler) UpdateAccount(c *gin.Context) {
-	newAccount := domain.Account{}
+	newAccount := accounts.Account{}
 	if err := c.Bind(&newAccount); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return

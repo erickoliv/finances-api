@@ -1,4 +1,4 @@
-package account
+package accounthttp
 
 import (
 	"bytes"
@@ -9,11 +9,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/erickoliv/finances-api/accounts"
+	"github.com/erickoliv/finances-api/accounts/mocks"
 	"github.com/erickoliv/finances-api/domain"
 	"github.com/erickoliv/finances-api/pkg/http/rest"
-	"github.com/erickoliv/finances-api/service"
-	"github.com/erickoliv/finances-api/test/entities"
-	"github.com/erickoliv/finances-api/test/mocks"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -21,10 +20,10 @@ import (
 )
 
 func TestMakeAccountView(t *testing.T) {
-	mocked := &mocks.Account{}
+	mocked := &mocks.Repository{}
 	tests := []struct {
 		name string
-		repo service.Account
+		repo accounts.Repository
 		want HTTPHandler
 	}{
 		{
@@ -48,7 +47,7 @@ func Test_handler_GetAccounts(t *testing.T) {
 
 	tests := []struct {
 		name         string
-		setupRepo    func() service.Account
+		setupRepo    func() accounts.Repository
 		setupContext func(c *gin.Context)
 		status       int
 		response     string
@@ -59,15 +58,15 @@ func Test_handler_GetAccounts(t *testing.T) {
 				c.Set(domain.LoggedUser, randomUser.String())
 				c.Next()
 			},
-			setupRepo: func() service.Account {
-				repo := &mocks.Account{}
+			setupRepo: func() accounts.Repository {
+				repo := &mocks.Repository{}
 				repo.On("Query", mock.Anything, &rest.Query{
 					Page:  1,
 					Limit: 100,
 					Filters: map[string]interface{}{
 						"owner = ?": randomUser,
 					},
-				}).Return(entities.ValidAcccounts(), nil)
+				}).Return(mocks.ValidAcccounts(), nil)
 				return repo
 			},
 			status:   http.StatusOK,
@@ -79,8 +78,8 @@ func Test_handler_GetAccounts(t *testing.T) {
 				c.Set(domain.LoggedUser, randomUser.String())
 				c.Next()
 			},
-			setupRepo: func() service.Account {
-				repo := &mocks.Account{}
+			setupRepo: func() accounts.Repository {
+				repo := &mocks.Repository{}
 				repo.On("Query", mock.Anything, &rest.Query{
 					Page:  1,
 					Limit: 100,
@@ -95,8 +94,8 @@ func Test_handler_GetAccounts(t *testing.T) {
 		},
 		{
 			name: "Should fail if receives a context without user",
-			setupRepo: func() service.Account {
-				return &mocks.Account{}
+			setupRepo: func() accounts.Repository {
+				return &mocks.Repository{}
 			},
 			status:   http.StatusUnauthorized,
 			response: `{"message":"user not present in context"}`,
@@ -136,7 +135,7 @@ func Test_handler_CreateAccount(t *testing.T) {
 	randomUser, _ := uuid.NewRandom()
 	tests := []struct {
 		name         string
-		setupRepo    func() service.Account
+		setupRepo    func() accounts.Repository
 		setupContext func(c *gin.Context)
 		payload      string
 		status       int
@@ -144,20 +143,20 @@ func Test_handler_CreateAccount(t *testing.T) {
 	}{
 		{
 			name: "return a error with invalid context, without user uuid",
-			setupRepo: func() service.Account {
-				return &mocks.Account{}
+			setupRepo: func() accounts.Repository {
+				return &mocks.Repository{}
 			},
 			setupContext: func(c *gin.Context) {
 				c.Next()
 			},
-			payload:  entities.ValidAccountPayload,
+			payload:  mocks.ValidAccountPayload,
 			status:   http.StatusUnauthorized,
 			response: `{"message":"user not present in context"}`,
 		},
 		{
 			name: "return a error with invalid payload",
-			setupRepo: func() service.Account {
-				return &mocks.Account{}
+			setupRepo: func() accounts.Repository {
+				return &mocks.Repository{}
 			},
 			setupContext: func(c *gin.Context) {
 				c.Set(domain.LoggedUser, randomUser.String())
@@ -169,8 +168,8 @@ func Test_handler_CreateAccount(t *testing.T) {
 		},
 		{
 			name: "error to save a valid account",
-			setupRepo: func() service.Account {
-				repo := &mocks.Account{}
+			setupRepo: func() accounts.Repository {
+				repo := &mocks.Repository{}
 				repo.On("Save", mock.Anything, mock.Anything).Return(errors.New("error to save"))
 				return repo
 			},
@@ -178,14 +177,14 @@ func Test_handler_CreateAccount(t *testing.T) {
 				c.Set(domain.LoggedUser, randomUser.String())
 				c.Next()
 			},
-			payload:  entities.ValidAccountPayload,
+			payload:  mocks.ValidAccountPayload,
 			status:   http.StatusInternalServerError,
 			response: `{"message":"error to save"}`,
 		},
 		{
 			name: "success to save a valid account",
-			setupRepo: func() service.Account {
-				repo := &mocks.Account{}
+			setupRepo: func() accounts.Repository {
+				repo := &mocks.Repository{}
 				repo.On("Save", mock.Anything, mock.Anything).Return(nil)
 				return repo
 			},
@@ -193,7 +192,7 @@ func Test_handler_CreateAccount(t *testing.T) {
 				c.Set(domain.LoggedUser, randomUser.String())
 				c.Next()
 			},
-			payload: entities.ValidAccountPayload,
+			payload: mocks.ValidAccountPayload,
 			status:  http.StatusCreated,
 		},
 	}
@@ -234,7 +233,7 @@ func Test_handler_GetAccount(t *testing.T) {
 
 	tests := []struct {
 		name         string
-		setupRepo    func() service.Account
+		setupRepo    func() accounts.Repository
 		setupContext func(c *gin.Context)
 		entity       string
 		status       int
@@ -242,8 +241,8 @@ func Test_handler_GetAccount(t *testing.T) {
 	}{
 		{
 			name: "error to get account if there is no user uuid in context",
-			setupRepo: func() service.Account {
-				return &mocks.Account{}
+			setupRepo: func() accounts.Repository {
+				return &mocks.Repository{}
 			},
 			entity:   validEntity.String(),
 			status:   http.StatusUnauthorized,
@@ -251,8 +250,8 @@ func Test_handler_GetAccount(t *testing.T) {
 		},
 		{
 			name: "invalid uuid in url",
-			setupRepo: func() service.Account {
-				return &mocks.Account{}
+			setupRepo: func() accounts.Repository {
+				return &mocks.Repository{}
 			},
 			setupContext: func(c *gin.Context) {
 				c.Set(domain.LoggedUser, loggedUser.String())
@@ -264,8 +263,8 @@ func Test_handler_GetAccount(t *testing.T) {
 		},
 		{
 			name: "error to get account from repository",
-			setupRepo: func() service.Account {
-				repo := &mocks.Account{}
+			setupRepo: func() accounts.Repository {
+				repo := &mocks.Repository{}
 				repo.On("Get", mock.Anything, validEntity, loggedUser).Return(nil, errors.New("error to get data"))
 				return repo
 			},
@@ -279,9 +278,9 @@ func Test_handler_GetAccount(t *testing.T) {
 		},
 		{
 			name: "empty account from repository",
-			setupRepo: func() service.Account {
-				repo := &mocks.Account{}
-				repo.On("Get", mock.Anything, validEntity, loggedUser).Return(&domain.Account{}, nil)
+			setupRepo: func() accounts.Repository {
+				repo := &mocks.Repository{}
+				repo.On("Get", mock.Anything, validEntity, loggedUser).Return(&accounts.Account{}, nil)
 				return repo
 			},
 			setupContext: func(c *gin.Context) {
@@ -294,9 +293,9 @@ func Test_handler_GetAccount(t *testing.T) {
 		},
 		{
 			name: "success - valid account from repository",
-			setupRepo: func() service.Account {
-				repo := &mocks.Account{}
-				repo.On("Get", mock.Anything, validEntity, loggedUser).Return(entities.ValidCompleteAccount(), nil)
+			setupRepo: func() accounts.Repository {
+				repo := &mocks.Repository{}
+				repo.On("Get", mock.Anything, validEntity, loggedUser).Return(mocks.ValidCompleteAccount(), nil)
 				return repo
 			},
 			setupContext: func(c *gin.Context) {
@@ -305,7 +304,7 @@ func Test_handler_GetAccount(t *testing.T) {
 			},
 			entity:   validEntity.String(),
 			status:   http.StatusOK,
-			response: serializeAccount(entities.ValidCompleteAccount()),
+			response: serializeAccount(mocks.ValidCompleteAccount()),
 		},
 	}
 	for _, tt := range tests {
@@ -336,11 +335,11 @@ func Test_handler_GetAccount(t *testing.T) {
 }
 
 func Test_handler_UpdateAccount(t *testing.T) {
-	validAccount := entities.ValidAccountWithoutDescription()
+	validAccount := mocks.ValidAccountWithoutDescription()
 
 	tests := []struct {
 		name         string
-		setupRepo    func() service.Account
+		setupRepo    func() accounts.Repository
 		setupContext func(c *gin.Context)
 		entity       string
 		payload      string
@@ -349,11 +348,11 @@ func Test_handler_UpdateAccount(t *testing.T) {
 	}{
 		{
 			name: "error due to invalid payload",
-			setupRepo: func() service.Account {
-				repo := mocks.Account{}
+			setupRepo: func() accounts.Repository {
+				repo := mocks.Repository{}
 
 				repo.On("Get",
-					mock.Anything, entities.ValidAccountWithoutName().UUID, entities.ValidAccountWithoutName().Owner,
+					mock.Anything, mocks.ValidAccountWithoutName().UUID, mocks.ValidAccountWithoutName().Owner,
 				).Return(validAccount, nil)
 
 				return &repo
@@ -362,15 +361,15 @@ func Test_handler_UpdateAccount(t *testing.T) {
 				c.Set(domain.LoggedUser, validAccount.Owner.String())
 				c.Next()
 			},
-			entity:   entities.ValidAccountWithoutName().UUID.String(),
-			payload:  serializeAccount(entities.ValidAccountWithoutName()),
+			entity:   mocks.ValidAccountWithoutName().UUID.String(),
+			payload:  serializeAccount(mocks.ValidAccountWithoutName()),
 			status:   http.StatusBadRequest,
 			response: `{"message":"Key: 'Account.Name' Error:Field validation for 'Name' failed on the 'required' tag"}`,
 		},
 		{
 			name: "invalid user in context",
-			setupRepo: func() service.Account {
-				return &mocks.Account{}
+			setupRepo: func() accounts.Repository {
+				return &mocks.Repository{}
 			},
 			entity:   validAccount.UUID.String(),
 			payload:  serializeAccount(validAccount),
@@ -379,8 +378,8 @@ func Test_handler_UpdateAccount(t *testing.T) {
 		},
 		{
 			name: "invalid uuid in url parameter",
-			setupRepo: func() service.Account {
-				return &mocks.Account{}
+			setupRepo: func() accounts.Repository {
+				return &mocks.Repository{}
 			},
 			setupContext: func(c *gin.Context) {
 				c.Set(domain.LoggedUser, validAccount.Owner.String())
@@ -393,8 +392,8 @@ func Test_handler_UpdateAccount(t *testing.T) {
 		},
 		{
 			name: "returns error to update a account",
-			setupRepo: func() service.Account {
-				repo := mocks.Account{}
+			setupRepo: func() accounts.Repository {
+				repo := mocks.Repository{}
 				repo.On("Get",
 					mock.Anything, validAccount.UUID, validAccount.Owner,
 				).Return(validAccount, nil)
@@ -413,11 +412,11 @@ func Test_handler_UpdateAccount(t *testing.T) {
 		},
 		{
 			name: "error to get current account",
-			setupRepo: func() service.Account {
-				repo := mocks.Account{}
+			setupRepo: func() accounts.Repository {
+				repo := mocks.Repository{}
 
 				repo.On("Get",
-					mock.Anything, entities.ValidAccountWithoutName().UUID, entities.ValidAccountWithoutName().Owner,
+					mock.Anything, mocks.ValidAccountWithoutName().UUID, mocks.ValidAccountWithoutName().Owner,
 				).Return(nil, errors.New("error to get current account"))
 
 				return &repo
@@ -433,11 +432,11 @@ func Test_handler_UpdateAccount(t *testing.T) {
 		},
 		{
 			name: "error due to current account not found",
-			setupRepo: func() service.Account {
-				repo := mocks.Account{}
+			setupRepo: func() accounts.Repository {
+				repo := mocks.Repository{}
 
 				repo.On("Get",
-					mock.Anything, entities.ValidAccountWithoutName().UUID, entities.ValidAccountWithoutName().Owner,
+					mock.Anything, mocks.ValidAccountWithoutName().UUID, mocks.ValidAccountWithoutName().Owner,
 				).Return(nil, nil)
 
 				return &repo
@@ -453,8 +452,8 @@ func Test_handler_UpdateAccount(t *testing.T) {
 		},
 		{
 			name: "success to update a account",
-			setupRepo: func() service.Account {
-				repo := mocks.Account{}
+			setupRepo: func() accounts.Repository {
+				repo := mocks.Repository{}
 
 				repo.On("Get",
 					mock.Anything, validAccount.UUID, validAccount.Owner,
@@ -503,11 +502,11 @@ func Test_handler_UpdateAccount(t *testing.T) {
 
 func Test_handler_DeleteAccount(t *testing.T) {
 	loggedUser := uuid.New()
-	validAccount := entities.ValidCompleteAccount()
+	validAccount := mocks.ValidCompleteAccount()
 
 	tests := []struct {
 		name         string
-		setupRepo    func() service.Account
+		setupRepo    func() accounts.Repository
 		setupContext func(c *gin.Context)
 		pk           string
 		status       int
@@ -515,8 +514,8 @@ func Test_handler_DeleteAccount(t *testing.T) {
 	}{
 		{
 			name: "successfully delete a account",
-			setupRepo: func() service.Account {
-				repo := &mocks.Account{}
+			setupRepo: func() accounts.Repository {
+				repo := &mocks.Repository{}
 				repo.On("Delete", mock.Anything, validAccount.UUID, loggedUser).Return(nil)
 				return repo
 			},
@@ -525,8 +524,8 @@ func Test_handler_DeleteAccount(t *testing.T) {
 		},
 		{
 			name: "error to get user from context",
-			setupRepo: func() service.Account {
-				repo := &mocks.Account{}
+			setupRepo: func() accounts.Repository {
+				repo := &mocks.Repository{}
 				return repo
 			},
 			setupContext: func(c *gin.Context) {
@@ -538,8 +537,8 @@ func Test_handler_DeleteAccount(t *testing.T) {
 		},
 		{
 			name: "error due to invalid uuid url param",
-			setupRepo: func() service.Account {
-				repo := &mocks.Account{}
+			setupRepo: func() accounts.Repository {
+				repo := &mocks.Repository{}
 				return repo
 			},
 			pk:       "invalid param",
@@ -548,8 +547,8 @@ func Test_handler_DeleteAccount(t *testing.T) {
 		},
 		{
 			name: "error to delete a account",
-			setupRepo: func() service.Account {
-				repo := &mocks.Account{}
+			setupRepo: func() accounts.Repository {
+				repo := &mocks.Repository{}
 				repo.On("Delete", mock.Anything, validAccount.UUID, loggedUser).Return(errors.New("error to delete account"))
 				return repo
 			},
@@ -589,7 +588,7 @@ func Test_handler_DeleteAccount(t *testing.T) {
 	}
 }
 
-func serializeAccount(entity *domain.Account) string {
+func serializeAccount(entity *accounts.Account) string {
 	raw, err := json.Marshal(entity)
 	if err != nil {
 		panic("error to marshall")
