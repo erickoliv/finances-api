@@ -6,7 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/erickoliv/finances-api/domain"
+	"github.com/erickoliv/finances-api/auth"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -36,7 +36,7 @@ func TestExtractFilters(t *testing.T) {
 			needUser: true,
 			url:      "/resource?limit=10&page=3&sort=age&q_name__eq=name&q_city__like=califo&q_age__gte=18&q_age__lte=60&ignorewithout_q=yes",
 			prepareContext: func(c *gin.Context) {
-				c.Set(domain.LoggedUser, validUUID.String())
+				c.Set(auth.LoggedUser, validUUID.String())
 				c.Next()
 			},
 			want: &Query{

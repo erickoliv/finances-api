@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/erickoliv/finances-api/auth"
-	"github.com/erickoliv/finances-api/domain"
 	"github.com/gin-gonic/gin"
 )
 
@@ -23,7 +22,7 @@ func Middleware(signer auth.SessionSigner) gin.HandlerFunc {
 			return
 		}
 
-		c.Set(domain.LoggedUser, user)
+		c.Set(auth.LoggedUser, user)
 		c.Next()
 	}
 }

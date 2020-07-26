@@ -1,4 +1,4 @@
-package tag
+package taghttp
 
 import (
 	"bytes"
@@ -9,11 +9,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/erickoliv/finances-api/domain"
+	"github.com/erickoliv/finances-api/auth"
 	"github.com/erickoliv/finances-api/pkg/http/rest"
-	"github.com/erickoliv/finances-api/service"
-	"github.com/erickoliv/finances-api/test/entities"
-	"github.com/erickoliv/finances-api/test/mocks"
+	"github.com/erickoliv/finances-api/tags"
+	"github.com/erickoliv/finances-api/tags/mocks"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -21,16 +20,16 @@ import (
 )
 
 func TestMakeTagView(t *testing.T) {
-	mocked := &mocks.Tag{}
+	mocked := &mocks.Repository{}
 	tests := []struct {
 		name string
-		repo service.Tag
+		repo tags.Repository
 		want HTTPHandler
 	}{
 		{
 			name: "create tag view",
 			repo: mocked,
-			want: handler{
+			want: &Handler{
 				repo: mocked,
 			},
 		},
@@ -48,7 +47,7 @@ func Test_handler_GetTags(t *testing.T) {
 
 	tests := []struct {
 		name         string
-		setupRepo    func() service.Tag
+		setupRepo    func() tags.Repository
 		setupContext func(c *gin.Context)
 		status       int
 		response     string
@@ -56,18 +55,18 @@ func Test_handler_GetTags(t *testing.T) {
 		{
 			name: "Should return a default paginated response",
 			setupContext: func(c *gin.Context) {
-				c.Set(domain.LoggedUser, randomUser.String())
+				c.Set(auth.LoggedUser, randomUser.String())
 				c.Next()
 			},
-			setupRepo: func() service.Tag {
-				repo := &mocks.Tag{}
+			setupRepo: func() tags.Repository {
+				repo := &mocks.Repository{}
 				repo.On("Query", mock.Anything, &rest.Query{
 					Page:  1,
 					Limit: 100,
 					Filters: map[string]interface{}{
 						"owner = ?": randomUser,
 					},
-				}).Return(entities.ValidTags(), nil)
+				}).Return(mocks.ValidTags(), nil)
 				return repo
 			},
 			status:   http.StatusOK,
@@ -76,11 +75,11 @@ func Test_handler_GetTags(t *testing.T) {
 		{
 			name: "Should return a error to query",
 			setupContext: func(c *gin.Context) {
-				c.Set(domain.LoggedUser, randomUser.String())
+				c.Set(auth.LoggedUser, randomUser.String())
 				c.Next()
 			},
-			setupRepo: func() service.Tag {
-				repo := &mocks.Tag{}
+			setupRepo: func() tags.Repository {
+				repo := &mocks.Repository{}
 				repo.On("Query", mock.Anything, &rest.Query{
 					Page:  1,
 					Limit: 100,
@@ -95,8 +94,8 @@ func Test_handler_GetTags(t *testing.T) {
 		},
 		{
 			name: "Should fail if receives a context without user",
-			setupRepo: func() service.Tag {
-				return &mocks.Tag{}
+			setupRepo: func() tags.Repository {
+				return &mocks.Repository{}
 			},
 			status:   http.StatusUnauthorized,
 			response: `{"message":"user not present in context"}`,
@@ -112,7 +111,7 @@ func Test_handler_GetTags(t *testing.T) {
 				router.Use(tt.setupContext)
 			}
 
-			view := handler{
+			view := Handler{
 				repo: tt.setupRepo(),
 			}
 
@@ -136,7 +135,7 @@ func Test_handler_CreateTag(t *testing.T) {
 	randomUser, _ := uuid.NewRandom()
 	tests := []struct {
 		name         string
-		setupRepo    func() service.Tag
+		setupRepo    func() tags.Repository
 		setupContext func(c *gin.Context)
 		payload      string
 		status       int
@@ -144,8 +143,8 @@ func Test_handler_CreateTag(t *testing.T) {
 	}{
 		{
 			name: "return a error with invalid payload",
-			setupRepo: func() service.Tag {
-				return &mocks.Tag{}
+			setupRepo: func() tags.Repository {
+				return &mocks.Repository{}
 			},
 			setupContext: func(c *gin.Context) {
 				c.Next()
@@ -156,43 +155,43 @@ func Test_handler_CreateTag(t *testing.T) {
 		},
 		{
 			name: "return a error with invalid context, without user uuid",
-			setupRepo: func() service.Tag {
-				return &mocks.Tag{}
+			setupRepo: func() tags.Repository {
+				return &mocks.Repository{}
 			},
 			setupContext: func(c *gin.Context) {
 				c.Next()
 			},
-			payload:  entities.ValidTagPayload,
+			payload:  mocks.ValidTagPayload,
 			status:   http.StatusUnauthorized,
 			response: `{"message":"user not present in context"}`,
 		},
 		{
 			name: "error to save a valid tag",
-			setupRepo: func() service.Tag {
-				repo := &mocks.Tag{}
+			setupRepo: func() tags.Repository {
+				repo := &mocks.Repository{}
 				repo.On("Save", mock.Anything, mock.Anything).Return(errors.New("error to save"))
 				return repo
 			},
 			setupContext: func(c *gin.Context) {
-				c.Set(domain.LoggedUser, randomUser.String())
+				c.Set(auth.LoggedUser, randomUser.String())
 				c.Next()
 			},
-			payload:  entities.ValidTagPayload,
+			payload:  mocks.ValidTagPayload,
 			status:   http.StatusInternalServerError,
 			response: `{"message":"error to save"}`,
 		},
 		{
 			name: "success to save a valid tag",
-			setupRepo: func() service.Tag {
-				repo := &mocks.Tag{}
+			setupRepo: func() tags.Repository {
+				repo := &mocks.Repository{}
 				repo.On("Save", mock.Anything, mock.Anything).Return(nil)
 				return repo
 			},
 			setupContext: func(c *gin.Context) {
-				c.Set(domain.LoggedUser, randomUser.String())
+				c.Set(auth.LoggedUser, randomUser.String())
 				c.Next()
 			},
-			payload:  entities.ValidTagPayload,
+			payload:  mocks.ValidTagPayload,
 			status:   http.StatusCreated,
 			response: ``,
 		},
@@ -204,7 +203,7 @@ func Test_handler_CreateTag(t *testing.T) {
 				router.Use(tt.setupContext)
 			}
 
-			view := handler{
+			view := Handler{
 				repo: tt.setupRepo(),
 			}
 
@@ -234,7 +233,7 @@ func Test_handler_GetTag(t *testing.T) {
 
 	tests := []struct {
 		name         string
-		setupRepo    func() service.Tag
+		setupRepo    func() tags.Repository
 		setupContext func(c *gin.Context)
 		entity       string
 		status       int
@@ -242,8 +241,8 @@ func Test_handler_GetTag(t *testing.T) {
 	}{
 		{
 			name: "error to get tag if there is no user uuid in context",
-			setupRepo: func() service.Tag {
-				return &mocks.Tag{}
+			setupRepo: func() tags.Repository {
+				return &mocks.Repository{}
 			},
 			entity:   validEntity.String(),
 			status:   http.StatusUnauthorized,
@@ -251,11 +250,11 @@ func Test_handler_GetTag(t *testing.T) {
 		},
 		{
 			name: "invalid uuid in url",
-			setupRepo: func() service.Tag {
-				return &mocks.Tag{}
+			setupRepo: func() tags.Repository {
+				return &mocks.Repository{}
 			},
 			setupContext: func(c *gin.Context) {
-				c.Set(domain.LoggedUser, loggedUser.String())
+				c.Set(auth.LoggedUser, loggedUser.String())
 				c.Next()
 			},
 			entity:   "invalid-uuid",
@@ -264,13 +263,13 @@ func Test_handler_GetTag(t *testing.T) {
 		},
 		{
 			name: "error to get tag from repository",
-			setupRepo: func() service.Tag {
-				repo := &mocks.Tag{}
+			setupRepo: func() tags.Repository {
+				repo := &mocks.Repository{}
 				repo.On("Get", mock.Anything, validEntity, loggedUser).Return(nil, errors.New("error to get data"))
 				return repo
 			},
 			setupContext: func(c *gin.Context) {
-				c.Set(domain.LoggedUser, loggedUser.String())
+				c.Set(auth.LoggedUser, loggedUser.String())
 				c.Next()
 			},
 			entity:   validEntity.String(),
@@ -279,13 +278,13 @@ func Test_handler_GetTag(t *testing.T) {
 		},
 		{
 			name: "empty tag from repository",
-			setupRepo: func() service.Tag {
-				repo := &mocks.Tag{}
-				repo.On("Get", mock.Anything, validEntity, loggedUser).Return(&domain.Tag{}, nil)
+			setupRepo: func() tags.Repository {
+				repo := &mocks.Repository{}
+				repo.On("Get", mock.Anything, validEntity, loggedUser).Return(&tags.Tag{}, nil)
 				return repo
 			},
 			setupContext: func(c *gin.Context) {
-				c.Set(domain.LoggedUser, loggedUser.String())
+				c.Set(auth.LoggedUser, loggedUser.String())
 				c.Next()
 			},
 			entity:   validEntity.String(),
@@ -294,18 +293,18 @@ func Test_handler_GetTag(t *testing.T) {
 		},
 		{
 			name: "success - valid tag from repository",
-			setupRepo: func() service.Tag {
-				repo := &mocks.Tag{}
-				repo.On("Get", mock.Anything, validEntity, loggedUser).Return(entities.ValidCompleteTag(), nil)
+			setupRepo: func() tags.Repository {
+				repo := &mocks.Repository{}
+				repo.On("Get", mock.Anything, validEntity, loggedUser).Return(mocks.ValidCompleteTag(), nil)
 				return repo
 			},
 			setupContext: func(c *gin.Context) {
-				c.Set(domain.LoggedUser, loggedUser.String())
+				c.Set(auth.LoggedUser, loggedUser.String())
 				c.Next()
 			},
 			entity:   validEntity.String(),
 			status:   http.StatusOK,
-			response: serializeTag(entities.ValidCompleteTag()),
+			response: serializeTag(mocks.ValidCompleteTag()),
 		},
 	}
 	for _, tt := range tests {
@@ -336,11 +335,11 @@ func Test_handler_GetTag(t *testing.T) {
 }
 
 func Test_handler_UpdateTag(t *testing.T) {
-	validTag := entities.ValidTagWithoutDescription()
+	validTag := mocks.ValidTagWithoutDescription()
 
 	tests := []struct {
 		name         string
-		setupRepo    func() service.Tag
+		setupRepo    func() tags.Repository
 		setupContext func(c *gin.Context)
 		entity       string
 		payload      string
@@ -349,28 +348,28 @@ func Test_handler_UpdateTag(t *testing.T) {
 	}{
 		{
 			name: "error due to invalid payload",
-			setupRepo: func() service.Tag {
-				repo := mocks.Tag{}
+			setupRepo: func() tags.Repository {
+				repo := mocks.Repository{}
 
 				repo.On("Get",
-					mock.Anything, entities.InvalidValidTagWithoutName().UUID, entities.InvalidValidTagWithoutName().Owner,
+					mock.Anything, mocks.InvalidValidTagWithoutName().UUID, mocks.InvalidValidTagWithoutName().Owner,
 				).Return(validTag, nil)
 
 				return &repo
 			},
 			setupContext: func(c *gin.Context) {
-				c.Set(domain.LoggedUser, validTag.Owner.String())
+				c.Set(auth.LoggedUser, validTag.Owner.String())
 				c.Next()
 			},
-			entity:   entities.InvalidValidTagWithoutName().UUID.String(),
-			payload:  serializeTag(entities.InvalidValidTagWithoutName()),
+			entity:   mocks.InvalidValidTagWithoutName().UUID.String(),
+			payload:  serializeTag(mocks.InvalidValidTagWithoutName()),
 			status:   http.StatusBadRequest,
 			response: `{"message":"Key: 'Tag.Name' Error:Field validation for 'Name' failed on the 'required' tag"}`,
 		},
 		{
 			name: "invalid user in context",
-			setupRepo: func() service.Tag {
-				return &mocks.Tag{}
+			setupRepo: func() tags.Repository {
+				return &mocks.Repository{}
 			},
 			entity:   validTag.UUID.String(),
 			payload:  serializeTag(validTag),
@@ -379,11 +378,11 @@ func Test_handler_UpdateTag(t *testing.T) {
 		},
 		{
 			name: "invalid uuid in url parameter",
-			setupRepo: func() service.Tag {
-				return &mocks.Tag{}
+			setupRepo: func() tags.Repository {
+				return &mocks.Repository{}
 			},
 			setupContext: func(c *gin.Context) {
-				c.Set(domain.LoggedUser, validTag.Owner.String())
+				c.Set(auth.LoggedUser, validTag.Owner.String())
 				c.Next()
 			},
 			entity:   "invalid param",
@@ -393,8 +392,8 @@ func Test_handler_UpdateTag(t *testing.T) {
 		},
 		{
 			name: "returns error to update a tag",
-			setupRepo: func() service.Tag {
-				repo := mocks.Tag{}
+			setupRepo: func() tags.Repository {
+				repo := mocks.Repository{}
 				repo.On("Get",
 					mock.Anything, validTag.UUID, validTag.Owner,
 				).Return(validTag, nil)
@@ -403,7 +402,7 @@ func Test_handler_UpdateTag(t *testing.T) {
 				return &repo
 			},
 			setupContext: func(c *gin.Context) {
-				c.Set(domain.LoggedUser, validTag.Owner.String())
+				c.Set(auth.LoggedUser, validTag.Owner.String())
 				c.Next()
 			},
 			entity:   validTag.UUID.String(),
@@ -413,17 +412,17 @@ func Test_handler_UpdateTag(t *testing.T) {
 		},
 		{
 			name: "error to get current tag",
-			setupRepo: func() service.Tag {
-				repo := mocks.Tag{}
+			setupRepo: func() tags.Repository {
+				repo := mocks.Repository{}
 
 				repo.On("Get",
-					mock.Anything, entities.InvalidValidTagWithoutName().UUID, entities.InvalidValidTagWithoutName().Owner,
+					mock.Anything, mocks.InvalidValidTagWithoutName().UUID, mocks.InvalidValidTagWithoutName().Owner,
 				).Return(nil, errors.New("error to get current tag"))
 
 				return &repo
 			},
 			setupContext: func(c *gin.Context) {
-				c.Set(domain.LoggedUser, validTag.Owner.String())
+				c.Set(auth.LoggedUser, validTag.Owner.String())
 				c.Next()
 			},
 			entity:   validTag.UUID.String(),
@@ -433,17 +432,17 @@ func Test_handler_UpdateTag(t *testing.T) {
 		},
 		{
 			name: "error due to current tag not found",
-			setupRepo: func() service.Tag {
-				repo := mocks.Tag{}
+			setupRepo: func() tags.Repository {
+				repo := mocks.Repository{}
 
 				repo.On("Get",
-					mock.Anything, entities.InvalidValidTagWithoutName().UUID, entities.InvalidValidTagWithoutName().Owner,
+					mock.Anything, mocks.InvalidValidTagWithoutName().UUID, mocks.InvalidValidTagWithoutName().Owner,
 				).Return(nil, nil)
 
 				return &repo
 			},
 			setupContext: func(c *gin.Context) {
-				c.Set(domain.LoggedUser, validTag.Owner.String())
+				c.Set(auth.LoggedUser, validTag.Owner.String())
 				c.Next()
 			},
 			entity:   validTag.UUID.String(),
@@ -453,8 +452,8 @@ func Test_handler_UpdateTag(t *testing.T) {
 		},
 		{
 			name: "success to update a tag",
-			setupRepo: func() service.Tag {
-				repo := mocks.Tag{}
+			setupRepo: func() tags.Repository {
+				repo := mocks.Repository{}
 
 				repo.On("Get",
 					mock.Anything, validTag.UUID, validTag.Owner,
@@ -464,7 +463,7 @@ func Test_handler_UpdateTag(t *testing.T) {
 				return &repo
 			},
 			setupContext: func(c *gin.Context) {
-				c.Set(domain.LoggedUser, validTag.Owner.String())
+				c.Set(auth.LoggedUser, validTag.Owner.String())
 				c.Next()
 			},
 			entity:   validTag.UUID.String(),
@@ -503,11 +502,11 @@ func Test_handler_UpdateTag(t *testing.T) {
 
 func Test_handler_DeleteTag(t *testing.T) {
 	loggedUser := uuid.New()
-	validTag := entities.ValidCompleteTag()
+	validTag := mocks.ValidCompleteTag()
 
 	tests := []struct {
 		name         string
-		setupRepo    func() service.Tag
+		setupRepo    func() tags.Repository
 		setupContext func(c *gin.Context)
 		pk           string
 		status       int
@@ -515,8 +514,8 @@ func Test_handler_DeleteTag(t *testing.T) {
 	}{
 		{
 			name: "successfully delete a tag",
-			setupRepo: func() service.Tag {
-				repo := &mocks.Tag{}
+			setupRepo: func() tags.Repository {
+				repo := &mocks.Repository{}
 				repo.On("Delete", mock.Anything, validTag.UUID, loggedUser).Return(nil)
 				return repo
 			},
@@ -525,8 +524,8 @@ func Test_handler_DeleteTag(t *testing.T) {
 		},
 		{
 			name: "error to get user from context",
-			setupRepo: func() service.Tag {
-				repo := &mocks.Tag{}
+			setupRepo: func() tags.Repository {
+				repo := &mocks.Repository{}
 				return repo
 			},
 			setupContext: func(c *gin.Context) {
@@ -538,8 +537,8 @@ func Test_handler_DeleteTag(t *testing.T) {
 		},
 		{
 			name: "error due to invalid uuid url param",
-			setupRepo: func() service.Tag {
-				repo := &mocks.Tag{}
+			setupRepo: func() tags.Repository {
+				repo := &mocks.Repository{}
 				return repo
 			},
 			pk:       "invalid param",
@@ -548,8 +547,8 @@ func Test_handler_DeleteTag(t *testing.T) {
 		},
 		{
 			name: "error to delete a tag",
-			setupRepo: func() service.Tag {
-				repo := &mocks.Tag{}
+			setupRepo: func() tags.Repository {
+				repo := &mocks.Repository{}
 				repo.On("Delete", mock.Anything, validTag.UUID, loggedUser).Return(errors.New("error to delete tag"))
 				return repo
 			},
@@ -564,7 +563,7 @@ func Test_handler_DeleteTag(t *testing.T) {
 
 			if tt.setupContext == nil {
 				tt.setupContext = func(c *gin.Context) {
-					c.Set(domain.LoggedUser, loggedUser.String())
+					c.Set(auth.LoggedUser, loggedUser.String())
 					c.Next()
 				}
 			}
@@ -589,7 +588,7 @@ func Test_handler_DeleteTag(t *testing.T) {
 	}
 }
 
-func serializeTag(entity *domain.Tag) string {
+func serializeTag(entity *tags.Tag) string {
 	raw, err := json.Marshal(entity)
 	if err != nil {
 		panic("error to marshall")

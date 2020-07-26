@@ -7,8 +7,13 @@ import (
 	"github.com/jinzhu/gorm"
 )
 
-// AuthCookie is cookie name used in autentication api, maybe use a injected parameter instead
-const AuthCookie string = "olivsoftauth"
+const (
+	// AuthCookie is cookie name used in autentication api, maybe use a injected parameter instead
+	AuthCookie string = "olivsoftauth"
+
+	// LoggedUser contains the UUID for the current user inside context
+	LoggedUser string = "current-logged-user"
+)
 
 // User domain/database representation
 type User struct {

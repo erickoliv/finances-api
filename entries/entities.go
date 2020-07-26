@@ -35,3 +35,24 @@ func (Entry) TableName() string {
 func (Entry) BeforeCreate(scope *gorm.Scope) error {
 	return scope.SetColumn("UUID", uuid.New())
 }
+
+// EntryTag is a association between Entry and Tag entities
+type EntryTag struct {
+	UUID      uuid.UUID  `gorm:"type:uuid;PRIMARY_KEY" json:"uuid" binding:"-"`
+	CreatedAt time.Time  `json:"createdAt" binding:"-"`
+	UpdatedAt time.Time  `json:"updatedAt" binding:"-"`
+	DeletedAt *time.Time `json:"-" binding:"-"`
+	Entry     uuid.UUID  `gorm:"INDEX,not null" json:"entry" `
+	Tag       uuid.UUID  `gorm:"INDEX,not null" json:"tag" `
+}
+
+// TableName returns Entry table name
+func (EntryTag) TableName() string {
+	return "public.entry_tags"
+}
+
+// BeforeCreate execute command before creating a EntryTag
+func (EntryTag) BeforeCreate(scope *gorm.Scope) (err error) {
+	err = scope.SetColumn("UUID", uuid.New())
+	return
+}

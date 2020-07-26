@@ -9,7 +9,6 @@ import (
 
 	"github.com/erickoliv/finances-api/auth"
 	"github.com/erickoliv/finances-api/auth/mocks"
-	"github.com/erickoliv/finances-api/domain"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 )
@@ -69,7 +68,7 @@ func TestMiddleware(t *testing.T) {
 
 			router.Use(got)
 			router.GET("", func(c *gin.Context) {
-				user := c.MustGet(domain.LoggedUser).(string)
+				user := c.MustGet(auth.LoggedUser).(string)
 
 				c.JSON(http.StatusOK, user)
 			})

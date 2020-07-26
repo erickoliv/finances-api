@@ -16,8 +16,8 @@
 
 
 ## Pending 
+- [ ] Replace GORM for a better solution, without so many abstrations 
 - [ ] improve database migration
-- [ ] Remove common and utils packages
 - [ ] Validate Request Payloads
 - [ ] better error handling, with "stack trace" build, using errors.Wrap 
 - [ ] metrics using influx and grafana 

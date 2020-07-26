@@ -14,7 +14,7 @@ run:
 ## dev: deploy local deployment with docker + docker-compose
 dev: 
 	rm -f finances-api
-	docker-compose up --build --force-recreate
+	docker-compose up --build --force-recreate --remove-orphans
 
 ## push: build docker image, pushing to remote repository. IMAGE_NAME and IMAGE_VERSION can be configured in .env file 
 push:
