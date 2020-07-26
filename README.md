@@ -17,7 +17,6 @@
 
 ## Pending 
 - [ ] improve database migration
-- [ ] Remove common and utils packages
 - [ ] Validate Request Payloads
 - [ ] better error handling, with "stack trace" build, using errors.Wrap 
 - [ ] metrics using influx and grafana 

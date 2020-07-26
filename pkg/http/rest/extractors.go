@@ -4,14 +4,14 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/erickoliv/finances-api/domain"
+	"github.com/erickoliv/finances-api/auth"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
 
 // ExtractUser extract and returns a user UUID from gin context
 func ExtractUser(c *gin.Context) (uuid.UUID, error) {
-	identifier := c.GetString(domain.LoggedUser)
+	identifier := c.GetString(auth.LoggedUser)
 	if len(identifier) == 0 {
 		return uuid.Nil, errors.New("user not present in context")
 	}

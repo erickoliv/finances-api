@@ -7,9 +7,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/erickoliv/finances-api/auth"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/erickoliv/finances-api/domain"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -27,7 +27,7 @@ func TestExtractUser(t *testing.T) {
 			name: "successfully gets a valid user uuid from context using extractor",
 			want: validUUID,
 			prepareContext: func(c *gin.Context) {
-				c.Set(domain.LoggedUser, validUUID.String())
+				c.Set(auth.LoggedUser, validUUID.String())
 			},
 			err: nil,
 		},
@@ -42,7 +42,7 @@ func TestExtractUser(t *testing.T) {
 			name: "error when the context contains a invalid data into logged user constant",
 			want: uuid.Nil,
 			prepareContext: func(c *gin.Context) {
-				c.Set(domain.LoggedUser, "invalid value")
+				c.Set(auth.LoggedUser, "invalid value")
 			},
 			err: errors.New("invalid UUID length: 13"),
 		},
