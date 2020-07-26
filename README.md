@@ -16,6 +16,7 @@
 
 
 ## Pending 
+- [ ] Replace GORM for a better solution, without so many abstrations 
 - [ ] improve database migration
 - [ ] Validate Request Payloads
 - [ ] better error handling, with "stack trace" build, using errors.Wrap 

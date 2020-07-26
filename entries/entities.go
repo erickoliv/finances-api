@@ -50,3 +50,9 @@ type EntryTag struct {
 func (EntryTag) TableName() string {
 	return "public.entry_tags"
 }
+
+// BeforeCreate execute command before creating a EntryTag
+func (EntryTag) BeforeCreate(scope *gorm.Scope) (err error) {
+	err = scope.SetColumn("UUID", uuid.New())
+	return
+}
