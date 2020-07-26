@@ -1,12 +1,12 @@
-package tags
+package taghttp
 
 import (
 	"net/http"
 
 	"github.com/erickoliv/finances-api/pkg/http/rest"
-	"github.com/erickoliv/finances-api/service"
+	"github.com/erickoliv/finances-api/tags"
+	"github.com/google/uuid"
 
-	"github.com/erickoliv/finances-api/domain"
 	"github.com/gin-gonic/gin"
 )
 
@@ -15,18 +15,18 @@ type HTTPHandler interface {
 	Router(*gin.RouterGroup)
 }
 
-type handler struct {
-	repo service.Tag
+type Handler struct {
+	repo tags.Repository
 }
 
 // NewHTTPHandler receives a Tag Service, returning a internal a HTTP tag handler
-func NewHTTPHandler(repo service.Tag) HTTPHandler {
-	return handler{
+func NewHTTPHandler(repo tags.Repository) *Handler {
+	return &Handler{
 		repo: repo,
 	}
 }
 
-func (view handler) Router(group *gin.RouterGroup) {
+func (view Handler) Router(group *gin.RouterGroup) {
 	group.GET("/tags", view.GetTags)
 	group.GET("/tags/:uuid", view.GetTag)
 	group.POST("/tags", view.CreateTag)
@@ -35,7 +35,7 @@ func (view handler) Router(group *gin.RouterGroup) {
 }
 
 // GetTags return all tags
-func (view handler) GetTags(c *gin.Context) {
+func (view Handler) GetTags(c *gin.Context) {
 	query, err := rest.ExtractFilters(c, true)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
@@ -62,8 +62,8 @@ func (view handler) GetTags(c *gin.Context) {
 }
 
 // CreateTag can be called to create a new instance of Tag on database, using props provided via http request
-func (view handler) CreateTag(c *gin.Context) {
-	tag := &domain.Tag{}
+func (view Handler) CreateTag(c *gin.Context) {
+	tag := &tags.Tag{}
 	if err := c.ShouldBind(tag); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 			"message": err.Error(),
@@ -90,7 +90,7 @@ func (view handler) CreateTag(c *gin.Context) {
 }
 
 // GetTag can be called to get a specific tag from the database. The uuid used to query is part of the url
-func (view handler) GetTag(c *gin.Context) {
+func (view Handler) GetTag(c *gin.Context) {
 	user, err := rest.ExtractUser(c)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"message": err.Error()})
@@ -109,7 +109,7 @@ func (view handler) GetTag(c *gin.Context) {
 		return
 	}
 
-	if row.IsNew() {
+	if row.UUID == uuid.Nil {
 		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"message": "tag not found"})
 		return
 	}
@@ -118,7 +118,7 @@ func (view handler) GetTag(c *gin.Context) {
 }
 
 // UpdateTag can be called to update a specific tag. The uuid used to query is part of the url
-func (view handler) UpdateTag(c *gin.Context) {
+func (view Handler) UpdateTag(c *gin.Context) {
 	user, err := rest.ExtractUser(c)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"message": err.Error()})
@@ -131,9 +131,9 @@ func (view handler) UpdateTag(c *gin.Context) {
 		return
 	}
 
-	newTag := &domain.Tag{
-		BaseModel: domain.BaseModel{UUID: pk},
-		Owner:     user,
+	newTag := &tags.Tag{
+		UUID:  pk,
+		Owner: user,
 	}
 	if err := c.Bind(newTag); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"message": err.Error()})
@@ -160,7 +160,7 @@ func (view handler) UpdateTag(c *gin.Context) {
 }
 
 // DeleteTag can be used to logical delete a row tag from the database.
-func (view handler) DeleteTag(c *gin.Context) {
+func (view Handler) DeleteTag(c *gin.Context) {
 	user, err := rest.ExtractUser(c)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"message": err.Error()})
