@@ -1,4 +1,4 @@
-package tag
+package tags
 
 import (
 	"net/http"
