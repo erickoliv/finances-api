@@ -47,7 +47,7 @@ func Run() error {
 	sqlStore := database.BuildSQLStore(db)
 
 	app := App{
-		signer:   makeJWTSigner(&config.JWT),
+		signer:   buildJWTSigner(&config.JWT),
 		sqlStore: sqlStore,
 		routes:   buildAPIRoutes(sqlStore),
 	}
@@ -85,8 +85,7 @@ func buildRouter(app App) *gin.Engine {
 	return r
 }
 
-// TODO: use a configuration service
-func makeJWTSigner(config *cfg.Auth) auth.SessionSigner {
+func buildJWTSigner(config *cfg.Auth) auth.SessionSigner {
 	key := []byte(config.Token)
 
 	return session.NewJWTSigner(key, config.TTL)
