@@ -2,13 +2,15 @@ version: '3'
 services:
   database:
     container_name: financesdb
-    image: postgres
+    image: postgres:12
     restart: always
     ports:
       - "5432:5432"
     environment:
       - 'POSTGRES_USER=${DB_USER}'
-      - 'POSTGRES_PASSWORD=${DB_PASSWORD}' 
+      - 'POSTGRES_PASSWORD=${DB_PASSWORD}'
+    volumes:
+      - ./deployments/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d:ro
   api:
     image: ${IMAGE_NAME}:${IMAGE_VERSION}
     build: .
