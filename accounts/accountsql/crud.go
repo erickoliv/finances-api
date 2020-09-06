@@ -11,17 +11,17 @@ import (
 	"github.com/pkg/errors"
 )
 
-type accountRepo struct {
+type Repository struct {
 	conn *gorm.DB
 }
 
-func MakeAccounts(conn *gorm.DB) *accountRepo {
-	return &accountRepo{
+func MakeAccounts(conn *gorm.DB) *Repository {
+	return &Repository{
 		conn,
 	}
 }
 
-func (repo *accountRepo) Get(ctx context.Context, pk uuid.UUID, owner uuid.UUID) (*accounts.Account, error) {
+func (repo *Repository) Get(ctx context.Context, pk uuid.UUID, owner uuid.UUID) (*accounts.Account, error) {
 	account := &accounts.Account{}
 	query := repo.conn.First(account, "uuid = ? AND owner = ?", pk, owner)
 
@@ -32,7 +32,7 @@ func (repo *accountRepo) Get(ctx context.Context, pk uuid.UUID, owner uuid.UUID)
 	return account, query.Error
 }
 
-func (repo *accountRepo) Query(ctx context.Context, filters *rest.Query) ([]*accounts.Account, error) {
+func (repo *Repository) Query(ctx context.Context, filters *rest.Query) ([]*accounts.Account, error) {
 	query, err := querybuilder.Build(repo.conn, filters)
 	if err != nil {
 		return nil, errors.Wrap(err, "account repository query")
@@ -44,7 +44,7 @@ func (repo *accountRepo) Query(ctx context.Context, filters *rest.Query) ([]*acc
 	return results, query.Error
 }
 
-func (repo *accountRepo) Save(ctx context.Context, account *accounts.Account) error {
+func (repo *Repository) Save(ctx context.Context, account *accounts.Account) error {
 	if account == nil {
 		return errors.New("invalid account")
 	}
@@ -52,7 +52,7 @@ func (repo *accountRepo) Save(ctx context.Context, account *accounts.Account) er
 	return repo.conn.Save(account).Error
 }
 
-func (repo *accountRepo) Delete(ctx context.Context, id uuid.UUID, user uuid.UUID) error {
+func (repo *Repository) Delete(ctx context.Context, id uuid.UUID, user uuid.UUID) error {
 	query := repo.conn.Where("uuid = ? AND owner = ?", id, user).Delete(&accounts.Account{})
 	return query.Error
 }

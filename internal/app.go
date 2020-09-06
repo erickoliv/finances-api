@@ -1,75 +1,93 @@
 package internal
 
 import (
-	"log"
-	"syscall"
-	"time"
+	"os"
 
 	"github.com/erickoliv/finances-api/accounts/accounthttp"
-	"github.com/erickoliv/finances-api/accounts/accountsql"
 	"github.com/erickoliv/finances-api/auth"
 	"github.com/erickoliv/finances-api/auth/authhttp"
 	"github.com/erickoliv/finances-api/categories/categoryhttp"
 	"github.com/erickoliv/finances-api/entries/entryhttp"
-	"github.com/erickoliv/finances-api/entries/entrysql"
 	"github.com/erickoliv/finances-api/index"
-	"github.com/erickoliv/finances-api/internal/db"
+	"github.com/erickoliv/finances-api/internal/cfg"
+	"github.com/erickoliv/finances-api/internal/database"
 	"github.com/erickoliv/finances-api/repository/session"
-	"github.com/erickoliv/finances-api/repository/sql"
 	"github.com/erickoliv/finances-api/tags/taghttp"
-	"github.com/erickoliv/finances-api/tags/tagsql"
 	"github.com/gin-gonic/gin"
-	"github.com/jinzhu/gorm"
+	"github.com/pkg/errors"
 )
 
-func buildRouter(conn *gorm.DB) *gin.Engine {
+type (
+	App struct {
+		signer   auth.SessionSigner
+		sqlStore database.SQLStore
+		routes   []Router
+	}
+	Router interface {
+		Router(*gin.RouterGroup)
+	}
+)
 
+func Run() error {
+	config, err := cfg.Load(os.Getenv)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	// add config struct validation here
+
+	db, err := database.Connect(&config.DB)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	if err := database.Migrate(db); err != nil {
+		return errors.WithStack(err)
+	}
+
+	sqlStore := database.BuildSQLStore(db)
+
+	app := App{
+		signer:   makeJWTSigner(&config.JWT),
+		sqlStore: sqlStore,
+		routes:   buildAPIRoutes(sqlStore),
+	}
+
+	router := buildRouter(app)
+
+	return router.Run()
+}
+
+func buildAPIRoutes(store database.SQLStore) []Router {
+	return []Router{
+		accounthttp.NewHTTPHandler(store.Account),
+		taghttp.NewHTTPHandler(store.Tag),
+		entryhttp.NewHandler(store.Entry),
+		categoryhttp.NewHandler(store.Category),
+	}
+}
+
+func buildRouter(app App) *gin.Engine {
 	r := gin.Default()
 	r.GET("/", index.Handler)
 
 	security := r.Group("/auth")
-	authenticator := sql.MakeAuthenticator(conn)
-	signer := makeJWTSigner()
-	authHandler := authhttp.NewHTTPHandler(authenticator, signer)
+
+	authHandler := authhttp.NewHTTPHandler(app.sqlStore.Auth, app.signer)
 	authHandler.Router(security)
 
 	api := r.Group("/api")
-	api.Use(authhttp.Middleware(signer))
+	api.Use(authhttp.Middleware(app.signer))
 
-	accountRepo := accountsql.MakeAccounts(conn)
-	accounts := accounthttp.NewHTTPHandler(accountRepo)
-	accounts.Router(api)
-
-	tagRepo := tagsql.BuildTagRepository(conn)
-	tags := taghttp.NewHTTPHandler(tagRepo)
-	tags.Router(api)
-
-	categoryRepo := sql.BuildCategoryRepository(conn)
-	categories := categoryhttp.NewHandler(categoryRepo)
-	categories.Router(api)
-
-	entryRepo := entrysql.BuildRepository(conn)
-	entries := entryhttp.NewHandler(entryRepo)
-	entries.Router(api)
+	for _, router := range app.routes {
+		router.Router(api)
+	}
 
 	return r
 }
 
 // TODO: use a configuration service
-func makeJWTSigner() auth.SessionSigner {
-	appToken, found := syscall.Getenv("APP_TOKEN")
-	if !found {
-		log.Fatal("env APP_TOKEN not found")
-	}
+func makeJWTSigner(config *cfg.Auth) auth.SessionSigner {
+	key := []byte(config.Token)
 
-	key := []byte(appToken)
-	ttl := time.Hour
-	return session.NewJWTSigner(key, ttl)
-}
-
-func Run() error {
-	conn := db.Prepare()
-	defer conn.Close()
-
-	return buildRouter(conn).Run()
+	return session.NewJWTSigner(key, config.TTL)
 }
