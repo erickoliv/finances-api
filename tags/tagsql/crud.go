@@ -11,17 +11,17 @@ import (
 	"github.com/pkg/errors"
 )
 
-type tagRepo struct {
+type Repository struct {
 	conn *gorm.DB
 }
 
-func BuildTagRepository(conn *gorm.DB) *tagRepo {
-	return &tagRepo{
+func BuildTagRepository(conn *gorm.DB) *Repository {
+	return &Repository{
 		conn,
 	}
 }
 
-func (repo *tagRepo) Get(ctx context.Context, pk uuid.UUID, owner uuid.UUID) (*tags.Tag, error) {
+func (repo *Repository) Get(ctx context.Context, pk uuid.UUID, owner uuid.UUID) (*tags.Tag, error) {
 	tag := &tags.Tag{}
 	query := repo.conn.First(tag, "uuid = ? AND owner = ?", pk, owner)
 
@@ -32,7 +32,7 @@ func (repo *tagRepo) Get(ctx context.Context, pk uuid.UUID, owner uuid.UUID) (*t
 	return tag, query.Error
 }
 
-func (repo *tagRepo) Query(ctx context.Context, filters *rest.Query) ([]tags.Tag, error) {
+func (repo *Repository) Query(ctx context.Context, filters *rest.Query) ([]tags.Tag, error) {
 	query, err := querybuilder.Build(repo.conn, filters)
 	if err != nil {
 		return nil, errors.Wrap(err, "tag repository query")
@@ -44,7 +44,7 @@ func (repo *tagRepo) Query(ctx context.Context, filters *rest.Query) ([]tags.Tag
 	return results, query.Error
 }
 
-func (repo tagRepo) Save(ctx context.Context, tag *tags.Tag) error {
+func (repo Repository) Save(ctx context.Context, tag *tags.Tag) error {
 	if tag == nil {
 		return errors.New("invalid tag")
 	}
@@ -55,7 +55,7 @@ func (repo tagRepo) Save(ctx context.Context, tag *tags.Tag) error {
 	return repo.conn.Save(tag).Error
 }
 
-func (repo tagRepo) Delete(ctx context.Context, id uuid.UUID, user uuid.UUID) error {
+func (repo Repository) Delete(ctx context.Context, id uuid.UUID, user uuid.UUID) error {
 	query := repo.conn.Where("uuid = ? AND owner = ?", id, user).Delete(&tags.Tag{})
 	return query.Error
 }
