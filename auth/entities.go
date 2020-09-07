@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 )
 
 const (
@@ -17,16 +17,16 @@ const (
 
 // User domain/database representation
 type User struct {
-	UUID      uuid.UUID  `gorm:"type:uuid;PRIMARY_KEY" json:"uuid" binding:"-"`
-	CreatedAt time.Time  `json:"createdAt" binding:"-"`
-	UpdatedAt time.Time  `json:"updatedAt" binding:"-"`
-	DeletedAt *time.Time `json:"-" binding:"-"`
-	FirstName string     `json:"firstName" binding:"required"`
-	LastName  string     `json:"lastName"`
-	Email     string     `json:"email" gorm:"UNIQUE" binding:"required"`
-	Username  string     `json:"username" gorm:"UNIQUE" binding:"required"`
-	Password  string     `json:"password"`
-	Active    bool       `json:"active"  `
+	UUID      uuid.UUID      `gorm:"type:uuid;primaryKey" json:"uuid" binding:"-"`
+	CreatedAt time.Time      `json:"createdAt" binding:"-"`
+	UpdatedAt time.Time      `json:"updatedAt" binding:"-"`
+	DeletedAt gorm.DeletedAt `json:"-" binding:"-"`
+	FirstName string         `json:"firstName" binding:"required"`
+	LastName  string         `json:"lastName"`
+	Email     string         `json:"email" gorm:"UNIQUE" binding:"required"`
+	Username  string         `json:"username" gorm:"UNIQUE" binding:"required"`
+	Password  string         `json:"password"`
+	Active    bool           `json:"active"  `
 }
 
 // TableName set user table name
@@ -35,7 +35,8 @@ func (User) TableName() string {
 }
 
 // BeforeCreate execute commands before creating User
-func (User) BeforeCreate(scope *gorm.Scope) (err error) {
-	err = scope.SetColumn("UUID", uuid.New())
+func (u *User) BeforeCreate(scope *gorm.DB) (err error) {
+	u.UUID = uuid.New()
+
 	return
 }

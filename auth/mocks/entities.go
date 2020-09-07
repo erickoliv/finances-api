@@ -14,7 +14,6 @@ func ValidUser() *auth.User {
 		UUID:      uuid.MustParse("2415d0a8-e543-4007-b323-51f19325b74a"),
 		CreatedAt: date20200101,
 		UpdatedAt: date20200101,
-		DeletedAt: nil,
 		Username:  "johndoe",
 		Email:     "validmail@mail.com",
 		FirstName: "John",

@@ -7,8 +7,8 @@ import (
 	"github.com/erickoliv/finances-api/pkg/http/rest"
 	"github.com/erickoliv/finances-api/pkg/querybuilder"
 	"github.com/google/uuid"
-	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"
+	"gorm.io/gorm"
 )
 
 type Repository struct {

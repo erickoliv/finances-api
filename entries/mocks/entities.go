@@ -14,7 +14,6 @@ func ValidCompleteEntry() *entries.Entry {
 		UUID:        uuid.MustParse("2415d0a8-e543-4007-b323-51f19325b74a"),
 		CreatedAt:   date20200101,
 		UpdatedAt:   date20200101,
-		DeletedAt:   nil,
 		Name:        "a valid entry name",
 		Description: "a valid description, with sóme speci@l s&mbols",
 		Owner:       uuid.MustParse("2415d0a8-e543-4007-b323-51f19325b74b"),
@@ -31,7 +30,6 @@ func ValidEntryWithoutDescription() *entries.Entry {
 		Date:      date20200101,
 		CreatedAt: date20200101,
 		UpdatedAt: date20200101,
-		DeletedAt: nil,
 		Name:      "a valid name",
 		Owner:     uuid.MustParse("2415d0a8-e543-4007-b323-52f19325b74b"),
 	}
@@ -47,7 +45,6 @@ func InvalidValidEntryWithoutName() *entries.Entry {
 		Category:    uuid.MustParse("24f00f4b-0173-4f73-89ee-77bc303f7fbd"),
 		Account:     uuid.MustParse("3fcc4248-9569-47db-a265-96114dcc60dc"),
 		Value:       float64(125.00),
-		DeletedAt:   nil,
 		Description: "a valid description, with sóme speci@l s&mbols",
 		Owner:       uuid.MustParse("2415d0a8-e543-4007-b323-52f19325b74b"),
 	}

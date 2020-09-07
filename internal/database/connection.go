@@ -4,22 +4,20 @@ import (
 	"fmt"
 
 	"github.com/erickoliv/finances-api/internal/cfg"
-	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/postgres" // for pg dialect
+	"gorm.io/driver/postgres" // for pg dialect
+	"gorm.io/gorm"
 )
 
 const connectionString = "host=%s user=%s port=%s dbname=%s password=%s sslmode=disable"
 
 // Connect database connection
 func Connect(config *cfg.Database) (*gorm.DB, error) {
-	dbURL := fmt.Sprintf(connectionString, config.Host, config.User, config.Port, config.Schema, config.Password)
+	dsn := fmt.Sprintf(connectionString, config.Host, config.User, config.Port, config.Schema, config.Password)
 
-	db, err := gorm.Open("postgres", dbURL)
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		return nil, err
 	}
-
-	db.LogMode(config.EnableLogging)
 
 	return db, nil
 }
