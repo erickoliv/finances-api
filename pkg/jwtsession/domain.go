@@ -1,4 +1,4 @@
-package session
+package jwtsession
 
 import (
 	"errors"
@@ -12,7 +12,7 @@ type claim struct {
 	jwt.StandardClaims
 }
 
-type jwtSigner struct {
+type JWTSigner struct {
 	key        []byte
 	sessionTTL time.Duration
 }

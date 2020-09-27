@@ -40,7 +40,7 @@ GIN_MODE=release
 ```
 
 ### vscode configuration file for debugging
-```json
+```js
 {
     // Use IntelliSense to learn about possible attributes.
     // Hover to view descriptions of existing attributes.
