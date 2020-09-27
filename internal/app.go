@@ -6,7 +6,6 @@ import (
 	"github.com/erickoliv/finances-api/accounts/accounthttp"
 	"github.com/erickoliv/finances-api/auth"
 	"github.com/erickoliv/finances-api/auth/authhttp"
-	"github.com/erickoliv/finances-api/auth/session"
 	"github.com/erickoliv/finances-api/categories/categoryhttp"
 	"github.com/erickoliv/finances-api/entries/entryhttp"
 	"github.com/erickoliv/finances-api/index"
@@ -15,6 +14,8 @@ import (
 	"github.com/erickoliv/finances-api/tags/taghttp"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
+
+	"github.com/erickoliv/finances-api/pkg/jwtsession"
 )
 
 type (
@@ -88,5 +89,5 @@ func buildRouter(app App) *gin.Engine {
 func buildJWTSigner(config *cfg.Auth) auth.SessionSigner {
 	key := []byte(config.Token)
 
-	return session.NewJWTSigner(key, config.TTL)
+	return jwtsession.NewJWTSigner(key, config.TTL)
 }

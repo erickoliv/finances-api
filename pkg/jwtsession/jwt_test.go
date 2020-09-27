@@ -1,4 +1,4 @@
-package session
+package jwtsession
 
 import (
 	"errors"
@@ -16,13 +16,13 @@ func TestNewJWTSigner(t *testing.T) {
 		name string
 		ttl  time.Duration
 		key  []byte
-		want *jwtSigner
+		want *JWTSigner
 	}{
 		{
 			name: "creates a new jwt signer",
 			key:  simpleKey,
 			ttl:  time.Hour,
-			want: &jwtSigner{
+			want: &JWTSigner{
 				key:        simpleKey,
 				sessionTTL: time.Hour,
 			},
@@ -44,7 +44,7 @@ func Test_SignAndValidateToken(t *testing.T) {
 		key          []byte
 		sessionTTL   time.Duration
 		identifier   string
-		wantedSigner *jwtSigner
+		wantedSigner *JWTSigner
 		signErr      error
 		validateErr  error
 	}{
@@ -53,7 +53,7 @@ func Test_SignAndValidateToken(t *testing.T) {
 			key:        signKey,
 			sessionTTL: time.Hour,
 			identifier: uuid.New().String(),
-			wantedSigner: &jwtSigner{
+			wantedSigner: &JWTSigner{
 				key:        signKey,
 				sessionTTL: time.Hour,
 			},
@@ -63,7 +63,7 @@ func Test_SignAndValidateToken(t *testing.T) {
 			key:        signKey,
 			sessionTTL: time.Millisecond,
 			identifier: uuid.New().String(),
-			wantedSigner: &jwtSigner{
+			wantedSigner: &JWTSigner{
 				key:        signKey,
 				sessionTTL: time.Millisecond,
 			},
@@ -74,7 +74,7 @@ func Test_SignAndValidateToken(t *testing.T) {
 			key:        signKey,
 			sessionTTL: time.Hour,
 			identifier: "",
-			wantedSigner: &jwtSigner{
+			wantedSigner: &JWTSigner{
 				key:        signKey,
 				sessionTTL: time.Hour,
 			},
@@ -84,7 +84,7 @@ func Test_SignAndValidateToken(t *testing.T) {
 			name:       "error to sign due to empty key",
 			sessionTTL: time.Hour,
 			identifier: uuid.New().String(),
-			wantedSigner: &jwtSigner{
+			wantedSigner: &JWTSigner{
 				sessionTTL: time.Hour,
 			},
 			signErr: errInvalidKey,
