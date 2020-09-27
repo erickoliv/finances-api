@@ -1,20 +1,21 @@
-package sql
+package categorysql
 
 import (
 	"context"
 
 	"github.com/erickoliv/finances-api/categories"
 	"github.com/erickoliv/finances-api/pkg/http/rest"
+	"github.com/erickoliv/finances-api/pkg/querybuilder"
 	"github.com/google/uuid"
-	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"
+	"gorm.io/gorm"
 )
 
 type CategoryRepo struct {
 	conn *gorm.DB
 }
 
-func BuildCategoryRepository(conn *gorm.DB) *CategoryRepo {
+func BuildRepository(conn *gorm.DB) *CategoryRepo {
 	return &CategoryRepo{
 		conn,
 	}
@@ -32,7 +33,7 @@ func (repo *CategoryRepo) Get(ctx context.Context, pk uuid.UUID, owner uuid.UUID
 }
 
 func (repo *CategoryRepo) Query(ctx context.Context, filters *rest.Query) ([]categories.Category, error) {
-	query, err := BuildQuery(repo.conn, filters)
+	query, err := querybuilder.Build(repo.conn, filters)
 	if err != nil {
 		return nil, errors.Wrap(err, "category repository query")
 	}

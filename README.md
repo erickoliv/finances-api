@@ -22,6 +22,7 @@
 - [ ] better error handling, with "stack trace" build, using errors.Wrap 
 - [ ] metrics using influx and grafana 
 - [ ] > 90% test coverage
+- [ ] Split domain interface definitions into Reader and Writer actions 
 
 ## Running:
 

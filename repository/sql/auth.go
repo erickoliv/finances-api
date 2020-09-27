@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	"github.com/erickoliv/finances-api/auth"
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 )
 
 type AuthRepo struct {
@@ -34,12 +34,13 @@ func (repo *AuthRepo) Login(ctx context.Context, username string, password strin
 	}
 
 	user := &auth.User{}
-	result := repo.db.First(user, "username = ? AND password = crypt(?, password)", username, password)
-	if result.RecordNotFound() {
+	err := repo.db.First(user, "username = ? AND password = crypt(?, password)", username, password).Error
+
+	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, errInvalidUser
 	}
 
-	return user, result.Error
+	return user, err
 }
 
 func (repo *AuthRepo) Register(ctx context.Context, user *auth.User) error {

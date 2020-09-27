@@ -14,7 +14,6 @@ func ValidCompleteAccount() *accounts.Account {
 		UUID:        uuid.MustParse("2415d0a8-e543-4007-b323-51f19325b74a"),
 		CreatedAt:   date20200101,
 		UpdatedAt:   date20200101,
-		DeletedAt:   nil,
 		Name:        "a valid name",
 		Description: "a valid description, with sóme speci@l s&mbols",
 		Owner:       uuid.MustParse("2415d0a8-e543-4007-b323-51f19325b74b"),
@@ -26,7 +25,6 @@ func ValidAccountWithoutDescription() *accounts.Account {
 		UUID:      uuid.MustParse("2415d0a8-e543-4007-b323-51f19325b74c"),
 		CreatedAt: date20200101,
 		UpdatedAt: date20200101,
-		DeletedAt: nil,
 		Name:      "a valid name",
 		Owner:     uuid.MustParse("2415d0a8-e543-4007-b323-52f19325b74b"),
 	}
@@ -37,7 +35,6 @@ func ValidAccountWithoutName() *accounts.Account {
 		UUID:        uuid.MustParse("2415d0a8-e543-4007-b323-51f19325b74c"),
 		CreatedAt:   date20200101,
 		UpdatedAt:   date20200101,
-		DeletedAt:   nil,
 		Description: "a valid description, with sóme speci@l s&mbols",
 		Owner:       uuid.MustParse("2415d0a8-e543-4007-b323-52f19325b74b"),
 	}

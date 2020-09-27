@@ -8,7 +8,7 @@ import (
 	"github.com/erickoliv/finances-api/categories"
 	"github.com/erickoliv/finances-api/entries"
 	"github.com/erickoliv/finances-api/tags"
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 )
 
 func Migrate(db *gorm.DB) error {
@@ -22,7 +22,7 @@ func Migrate(db *gorm.DB) error {
 	}
 
 	for _, entity := range migrations {
-		err := db.AutoMigrate(entity).Error
+		err := db.AutoMigrate(entity)
 		if err == nil {
 			continue
 		}
