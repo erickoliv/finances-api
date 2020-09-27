@@ -2,9 +2,9 @@ package database
 
 import (
 	"github.com/erickoliv/finances-api/accounts/accountsql"
+	"github.com/erickoliv/finances-api/auth/sql"
 	"github.com/erickoliv/finances-api/categories/categorysql"
 	"github.com/erickoliv/finances-api/entries/entrysql"
-	"github.com/erickoliv/finances-api/repository/sql"
 	"github.com/erickoliv/finances-api/tags/tagsql"
 	"gorm.io/gorm"
 )
