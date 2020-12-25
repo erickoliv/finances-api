@@ -7,6 +7,10 @@ export
 help: Makefile
 	@sed -n 's/^##//p' $<
 
+# build the application docker image
+build:
+	docker build . -t ${IMAGE_NAME}:${IMAGE_VERSION}
+
 ## run: execute application with go run 
 run: 
 	go run main.go
@@ -18,7 +22,7 @@ dev:
 
 ## push: build docker image, pushing to remote repository. IMAGE_NAME and IMAGE_VERSION can be configured in .env file 
 push:
-	docker build . -t ${IMAGE_NAME}:${IMAGE_VERSION}
+	make build
 	docker push ${IMAGE_NAME}:${IMAGE_VERSION}
 
 ## tests: execute go tests with race condition enabled and code coverage (used in travis and codecov)
