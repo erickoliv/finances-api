@@ -11,7 +11,7 @@ import (
 
 	"github.com/erickoliv/finances-api/auth"
 	"github.com/erickoliv/finances-api/categories"
-	"github.com/erickoliv/finances-api/categories/categoryhttp/mocks"
+	"github.com/erickoliv/finances-api/categories/mocks"
 	"github.com/erickoliv/finances-api/pkg/http/rest"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
